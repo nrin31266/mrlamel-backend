@@ -1,0 +1,20 @@
+services:
+  mysql:
+    image: mysql:latest
+    container_name: mysql-mrlamel
+    environment:
+      MYSQL_DATABASE: mrlamel
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - '3306:3306'
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - mrlamel
+
+volumes:
+  mysql-data:
+
+networks:
+  mrlamel:
+    driver: bridge
