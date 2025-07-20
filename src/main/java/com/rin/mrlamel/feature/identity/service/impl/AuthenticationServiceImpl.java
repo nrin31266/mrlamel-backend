@@ -1,6 +1,7 @@
 package com.rin.mrlamel.feature.identity.service.impl;
 
 import com.rin.mrlamel.common.constant.USER_STATUS;
+import com.rin.mrlamel.common.exception.AppException;
 import com.rin.mrlamel.common.utils.JwtTokenProvider;
 import com.rin.mrlamel.common.utils.OtpProvider;
 import com.rin.mrlamel.feature.identity.dto.req.RegisterReq;
@@ -44,7 +45,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     public AuthRes login(String email, String password, HttpServletResponse response) {
         User user = findUserByEmail(email);
         if (!verifyPassword(password, user.getPassword())) {
-            throw new RuntimeException("Invalid password for user: " + email);
+            throw new AppException("Invalid password for user: " + email);
         }
         // Generate JWT token and refresh token
         return getAuthRes(user, response);
@@ -53,7 +54,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Override
     public AuthRes register(RegisterReq rq, HttpServletResponse response) {
         if (userRepository.existsByEmail(rq.getEmail())) {
-            throw new RuntimeException("User already exists with email: " + rq.getEmail());
+            throw new AppException("User already exists with email: " + rq.getEmail());
         }
         User user = userMapper.toUser(rq);
         user.setPassword(passwordEncoder.encode(rq.getPassword()));
@@ -75,7 +76,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     private User findUserByEmail(String email) {
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+                .orElseThrow(() -> new AppException("User not found with email: " + email));
     }
 
     private boolean verifyPassword(String rawPassword, String encodedPassword) {

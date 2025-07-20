@@ -1,15 +1,12 @@
 package com.rin.mrlamel.feature.identity.dto.req;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.rin.mrlamel.common.constant.USER_ROLE;
-import com.rin.mrlamel.common.constant.USER_STATUS;
-import jakarta.persistence.Column;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.hibernate.validator.constraints.Length;
 
 import java.time.LocalDate;
 
@@ -19,7 +16,11 @@ import java.time.LocalDate;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class LoginRq {
+    @NotBlank(message = "Email is required")
+    @Email(message = "Invalid email format")
     String email;
+    @NotBlank(message = "Password is required")
+    @Length(min = 2, message = "Password must be at least 1 characters long")
     String password;
 
 }
