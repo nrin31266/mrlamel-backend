@@ -22,5 +22,8 @@ public class LoginRq {
     @NotBlank(message = "Password is required")
     @Length(min = 2, message = "Password must be at least 1 characters long")
     String password;
+    @NotBlank(message = "Device ID is required")
+    String deviceId;
+    String deviceName;
 
 }

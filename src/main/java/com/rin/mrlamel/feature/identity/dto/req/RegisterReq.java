@@ -21,4 +21,7 @@ public class RegisterReq {
     String address;
     String email;
     String password;
+    @NotBlank(message = "Device ID is required")
+    String deviceId;
+    String deviceName;
 }
