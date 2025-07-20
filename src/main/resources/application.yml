@@ -32,7 +32,7 @@ server:
     context-path: /
 
 jwt:
-  signerKey: ${JWT_SIGNER_KEY:VbjgdYCKEfszCLbVVOtxkNYlIbhumypX}
+  signerKey: ${JWT_SIGNER_KEY:HOdXCyIIbIZEBThRVPkWEsVDhsqiLnsVAFfyBjJXabkrIPlFTlPzKCCDmMWopsSH}
 
 cors:
   allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:300}

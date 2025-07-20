@@ -21,7 +21,7 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
         response.getWriter().write(
                 String.format("""
                 {
-                    "status": 401,
+                    "code": 401,
                     "error": "Unauthorized",
                     "message": "%s",
                     "path": "%s"
