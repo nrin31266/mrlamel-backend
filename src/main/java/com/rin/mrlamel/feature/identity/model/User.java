@@ -53,4 +53,8 @@ public class User {
     LocalDateTime createdAt;
     @LastModifiedDate
     LocalDateTime updatedAt;
+
+    @JsonIgnore
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    UserCode userCode = new UserCode();
 }

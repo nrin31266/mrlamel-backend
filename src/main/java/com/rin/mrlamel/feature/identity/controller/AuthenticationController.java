@@ -6,6 +6,7 @@ import com.rin.mrlamel.feature.identity.dto.req.RegisterReq;
 import com.rin.mrlamel.feature.identity.dto.res.AuthRes;
 import com.rin.mrlamel.feature.identity.model.User;
 import com.rin.mrlamel.feature.identity.service.AuthenticationService;
+import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -33,7 +34,7 @@ public class AuthenticationController {
     }
 
     @PostMapping("/auth/register")
-    public ApiRes<AuthRes> register(@Validated @RequestBody RegisterReq rq, HttpServletResponse response) {
+    public ApiRes<AuthRes> register(@Validated @RequestBody RegisterReq rq, HttpServletResponse response) throws MessagingException {
 
         // Implement registration logic here
         return ApiRes.<AuthRes>builder()
