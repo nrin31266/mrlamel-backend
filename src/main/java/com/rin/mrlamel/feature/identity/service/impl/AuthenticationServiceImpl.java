@@ -35,7 +35,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         Cookie cookie = new Cookie("refreshToken", refreshToken);
         cookie.setHttpOnly(true); // Chỉ cho phép truy cập từ phía máy chủ
         cookie.setSecure(false); // Chỉ gửi cookie qua HTTPS
-        cookie.setPath("/api/auth/refresh"); // Cookie có hiệu lực trên đường dẫn này
+        cookie.setPath("/"); // Cookie có hiệu lực trên đường dẫn này
         cookie.setMaxAge(60 * 60 * 24 * 7); // Cookie có hiệu lực trong 7 ngày
         response.addCookie(cookie); // Thêm cookie vào phản hồi HTTP
     }
@@ -64,8 +64,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     private AuthRes getAuthRes(User user, HttpServletResponse response) {
-        String accessToken = jwtTokenProvider.generateToken(user, 5 * 60 * 1000); // 5 minutes
-        String refreshToken = jwtTokenProvider.generateToken(user, 7 * 24 * 60 * 60 * 1000); // 7 days
+        String accessToken = jwtTokenProvider.generateToken(user, 5 * 60); // 5 minutes
+        String refreshToken = jwtTokenProvider.generateToken(user, 7 * 24 * 60 * 60); // 7 days
         saveRefreshToken(refreshToken, response); // Save refresh token in cookie
         return AuthRes.builder()
                 .accessToken(accessToken)
