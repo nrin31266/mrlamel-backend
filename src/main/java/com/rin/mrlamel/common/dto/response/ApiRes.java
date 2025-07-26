@@ -15,4 +15,12 @@ public class ApiRes<T> {
     int code = 200;
     T data;
     String message;
+
+    public static <T> ApiRes<T> success(T data) {
+        return ApiRes.<T>builder()
+                .code(200)
+                .data(data)
+                .message("Success")
+                .build();
+    }
 }

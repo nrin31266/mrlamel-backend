@@ -41,6 +41,7 @@ public class AuthenticationConfig {
         log.info("CORS allowed origins: {}", allowedOrigins);
     }
 
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity, CustomJwtDecoder customJwtDecoder, CustomAuthenticationEntryPoint customAuthenticationEntryPoint) throws Exception {
         // Debugging
@@ -48,8 +49,16 @@ public class AuthenticationConfig {
         httpSecurity
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/api/**").authenticated()
-                        .anyRequest().permitAll()
+                        .requestMatchers(
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/api/v1/welcome",
+                                "/api/v1/auth/login",
+                                "/api/v1/auth/register",
+                                "/api/v1/auth/reset-password",
+                                "/api/v1/auth/send-reset-password",
+                                "/api/v1/auth/refresh-token").permitAll()
+                        .anyRequest().authenticated()
                 )
                 .cors(cors -> cors.configurationSource(request -> {
                     var config = new CorsConfiguration();

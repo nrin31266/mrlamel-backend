@@ -7,7 +7,6 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,10 +14,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
-import java.util.Objects;
 
 @RestController
-@RequestMapping
+@RequestMapping("/api/v1")
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class WelcomeController {
@@ -36,7 +34,7 @@ public class WelcomeController {
         return "Welcome to MrLamEl API";
     }
 
-    @GetMapping("/api/welcome")
+    @GetMapping("/user/welcome")
     public ResponseEntity<Object> apiWelcome(Authentication authentication) {
         Map<String, Object> userDetails = Map.of(
                 "email", jwtTokenProvider.getSubject(authentication),
@@ -47,17 +45,17 @@ public class WelcomeController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping("/api/admin/welcome")
+    @GetMapping("/admin/welcome")
     public String adminWelcome() {
         return "Welcome to MrLamEl Admin API";
     }
     @PreAuthorize("hasRole('STUDENT')")
-    @GetMapping("/api/student/welcome")
+    @GetMapping("/student/welcome")
     public String studentWelcome() {
         return "Welcome to MrLamEl Student API";
     }
     @PreAuthorize("hasRole('TEACHER')")
-    @GetMapping("/api/teacher/welcome")
+    @GetMapping("/teacher/welcome")
     public String teacherWelcome() {
         return "Welcome to MrLamEl Teacher API";
     }

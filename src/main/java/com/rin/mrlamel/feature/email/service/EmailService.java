@@ -1,4 +1,4 @@
-package com.rin.mrlamel.common.utils;
+package com.rin.mrlamel.feature.email.service;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -10,14 +10,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Component
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-public class EmailProvider {
+public class EmailService {
     JavaMailSender mailSender;
     @NonFinal
     @Value("${spring.mail.username}")

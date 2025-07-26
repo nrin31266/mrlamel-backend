@@ -2,7 +2,7 @@ package com.rin.mrlamel.feature.identity.service.impl;
 
 import com.rin.mrlamel.common.constant.USER_STATUS;
 import com.rin.mrlamel.common.exception.AppException;
-import com.rin.mrlamel.common.utils.EmailProvider;
+import com.rin.mrlamel.feature.email.service.EmailService;
 import com.rin.mrlamel.common.utils.JwtTokenProvider;
 import com.rin.mrlamel.common.utils.OtpProvider;
 import com.rin.mrlamel.feature.identity.dto.req.LoginRq;
@@ -37,14 +37,14 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Service
 public class AuthenticationServiceImpl implements AuthenticationService {
-    EmailProvider emailProvider;
+    EmailService emailProvider;
     OtpProvider otpProvider;
     PasswordEncoder passwordEncoder;
     UserRepository userRepository;
     JwtTokenProvider jwtTokenProvider;
     UserMapper userMapper;
     int durationInMinutes = 1;
-    long accessTokenDuration = 5 * 60 * 1000; // 5 minutes
+    long accessTokenDuration = 1 * 60 * 1000; // 5 minutes
     long refreshTokenDuration = 7 * 24 * 60* 60 * 1000; // 7 days
     RefreshTokenRepository refreshTokenRepository;
 
@@ -98,6 +98,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Override
     public void sendEmailVerification(Authentication authentication) throws MessagingException {
         User user = findUserByEmail(jwtTokenProvider.getSubject(authentication));
+        if(user.isActive()) {
+            throw new AppException("Email already verified for user: " + user.getEmail());
+        }
         UserCode userCode = user.getUserCode();
         if(userCode ==null){
             userCode = new UserCode();
@@ -212,6 +215,12 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         cookie.setSecure(false); // Set to true if using HTTPS
         response.addCookie(cookie);
     }
+
+    @Override
+    public User getUserByAuthentication(Authentication authentication) {
+        return userRepository.findByEmail(jwtTokenProvider.getSubject(authentication)).orElse(null);
+    }
+
     private AuthRes getAuthRes(User user, HttpServletResponse response, RefreshToken oRefreshToken) {
         String accessToken = jwtTokenProvider.generateToken(user, accessTokenDuration, "access_token"); // 5 minutes
         String refreshToken = jwtTokenProvider.generateToken(user, refreshTokenDuration, "refresh_token"); // 7 days

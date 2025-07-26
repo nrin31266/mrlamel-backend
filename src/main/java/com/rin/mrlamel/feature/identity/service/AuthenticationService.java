@@ -17,4 +17,5 @@ public interface AuthenticationService {
     void resetPassword(String email,String token, String newPassword);
     AuthRes refreshToken(String refreshToken, HttpServletResponse response);
     void logout(String refreshToken, HttpServletResponse response);
+    User getUserByAuthentication(Authentication authentication);
 }

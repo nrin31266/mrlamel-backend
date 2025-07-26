@@ -1,7 +1,6 @@
 package com.rin.mrlamel.common.exception;
 
 import com.rin.mrlamel.common.dto.response.ApiRes;
-import io.swagger.v3.oas.models.responses.ApiResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;

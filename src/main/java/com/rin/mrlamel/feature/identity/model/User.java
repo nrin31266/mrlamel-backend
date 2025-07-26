@@ -3,6 +3,8 @@ package com.rin.mrlamel.feature.identity.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.rin.mrlamel.common.constant.USER_ROLE;
 import com.rin.mrlamel.common.constant.USER_STATUS;
+import com.rin.mrlamel.feature.classroom.model.ClassSchedule;
+import com.rin.mrlamel.feature.classroom.model.ClassSession;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Pattern;
@@ -50,16 +52,29 @@ public class User {
     USER_ROLE role = USER_ROLE.STUDENT; // Default role is STUDENT
     String avatarUrl;
     String address;
+    boolean completedProfile = false; // Indicates if the user has completed their profile
     @CreationTimestamp
     LocalDateTime createdAt;
     @LastModifiedDate
     LocalDateTime updatedAt;
-
     @JsonIgnore
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     UserCode userCode = new UserCode();
-
     @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     List<RefreshToken> refreshTokens;
+    @JsonIgnore
+    @OneToMany(mappedBy = "teacher", orphanRemoval = true)
+    List<ClassSchedule> teacherClassSchedules;
+    @JsonIgnore
+    @OneToMany(mappedBy = "teacher", orphanRemoval = true)
+    List<ClassSession> teacherClaSessions;
+
+    public boolean isProfileComplete() {
+        return fullName != null && !fullName.isEmpty() &&
+               phoneNumber != null && !phoneNumber.isEmpty() &&
+               dob != null &&
+               address != null && !address.isEmpty();
+    }
+
 }

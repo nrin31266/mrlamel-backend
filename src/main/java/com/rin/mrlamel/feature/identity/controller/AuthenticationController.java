@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,12 +22,13 @@ import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
+@RequestMapping("/api/v1/auth")
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 public class AuthenticationController {
     AuthenticationService authenticationService;
 
-    @PostMapping("/auth/login")
+    @PostMapping("/login")
     public ApiRes<AuthRes> login(@Validated @RequestBody LoginRq rq, HttpServletResponse response) {
         // Implement login logic here
         return ApiRes.<AuthRes>builder()
@@ -34,7 +36,7 @@ public class AuthenticationController {
                 .build();
     }
 
-    @PostMapping("/auth/register")
+    @PostMapping("/register")
     public ApiRes<AuthRes> register(@Validated @RequestBody RegisterReq rq, HttpServletResponse response) throws MessagingException {
 
         // Implement registration logic here
@@ -43,14 +45,14 @@ public class AuthenticationController {
                 .build();
     }
 
-    @PostMapping("/auth/refresh-token")
+    @PostMapping("/refresh-token")
     public ApiRes<AuthRes> refreshToken(@CookieValue("refreshToken") String refreshToken, HttpServletResponse response) {
         return ApiRes.<AuthRes>builder()
                 .data(authenticationService.refreshToken(refreshToken, response))
                 .build();
     }
 
-    @PostMapping("/auth/logout")
+    @PostMapping("/logout")
     public ResponseEntity<?> logout(
             @CookieValue(name = "refreshToken", required = false) String refreshToken,
             HttpServletResponse response
@@ -66,6 +68,36 @@ public class AuthenticationController {
         }
         return ResponseEntity.ok(Map.of("message", "Logged out successfully! " + (errorMessage.isEmpty() ? "" : "But: " + errorMessage)));
     }
+    @PostMapping("/send-email-verification")
+    public ResponseEntity<?> sendEmailVerification(Authentication authentication) throws MessagingException {
+        authenticationService.sendEmailVerification(authentication);
+        return ResponseEntity.ok(Map.of("message", "Email verification sent successfully!"));
+    }
 
-
+    @PostMapping("/send-reset-password")
+    public ResponseEntity<?> sendResetPassword(@RequestParam String email) throws MessagingException {
+        authenticationService.sendResetPassword(email);
+        return ResponseEntity.ok(Map.of("message", "Reset password email sent successfully!"));
+    }
+    @PutMapping("/verify-email")
+    public ResponseEntity<?> verifyEmail(Authentication authentication, @RequestParam String token) {
+        authenticationService.verifyEmail(authentication, token);
+        return ResponseEntity.ok(Map.of("message", "Email verified successfully!"));
+    }
+    @PutMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(
+            @RequestParam String email,
+            @RequestParam String token,
+            @RequestParam String newPassword
+    ) {
+        authenticationService.resetPassword(email, token, newPassword);
+        return ResponseEntity.ok(Map.of("message", "Password reset successfully!"));
+    }
+    @GetMapping("/my")
+    public ApiRes<User> getMyInfo(Authentication authentication) {
+        User user = authenticationService.getUserByAuthentication(authentication);
+        return ApiRes.<User>builder()
+                .data(user)
+                .build();
+    }
 }
