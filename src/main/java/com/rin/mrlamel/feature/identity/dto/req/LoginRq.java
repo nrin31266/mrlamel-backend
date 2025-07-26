@@ -20,7 +20,7 @@ public class LoginRq {
     @Email(message = "Invalid email format")
     String email;
     @NotBlank(message = "Password is required")
-    @Length(min = 2, message = "Password must be at least 1 characters long")
+    @Length(min = 3, message = "Password must be at least 3 characters long")
     String password;
     @NotBlank(message = "Device ID is required")
     String deviceId;

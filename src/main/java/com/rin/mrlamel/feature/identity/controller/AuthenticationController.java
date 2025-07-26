@@ -3,6 +3,7 @@ package com.rin.mrlamel.feature.identity.controller;
 import com.rin.mrlamel.common.dto.response.ApiRes;
 import com.rin.mrlamel.feature.identity.dto.req.LoginRq;
 import com.rin.mrlamel.feature.identity.dto.req.RegisterReq;
+import com.rin.mrlamel.feature.identity.dto.req.UpdateProfileRq;
 import com.rin.mrlamel.feature.identity.dto.res.AuthRes;
 import com.rin.mrlamel.feature.identity.model.User;
 import com.rin.mrlamel.feature.identity.service.AuthenticationService;
@@ -99,5 +100,13 @@ public class AuthenticationController {
         return ApiRes.<User>builder()
                 .data(user)
                 .build();
+    }
+    @PutMapping("/update-profile")
+    public ResponseEntity<?> updateProfile(
+            Authentication authentication,
+            @Validated @RequestBody UpdateProfileRq updateProfileRq
+    ) {
+        authenticationService.updateProfile(authentication, updateProfileRq);
+        return ResponseEntity.ok(Map.of("message", "Profile updated successfully!"));
     }
 }

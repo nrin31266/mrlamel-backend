@@ -2,6 +2,7 @@ package com.rin.mrlamel.feature.identity.service;
 
 import com.rin.mrlamel.feature.identity.dto.req.LoginRq;
 import com.rin.mrlamel.feature.identity.dto.req.RegisterReq;
+import com.rin.mrlamel.feature.identity.dto.req.UpdateProfileRq;
 import com.rin.mrlamel.feature.identity.dto.res.AuthRes;
 import com.rin.mrlamel.feature.identity.model.User;
 import jakarta.mail.MessagingException;
@@ -18,4 +19,5 @@ public interface AuthenticationService {
     AuthRes refreshToken(String refreshToken, HttpServletResponse response);
     void logout(String refreshToken, HttpServletResponse response);
     User getUserByAuthentication(Authentication authentication);
+    void updateProfile(Authentication authentication, UpdateProfileRq updateProfileRq);
 }

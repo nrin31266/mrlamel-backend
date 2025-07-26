@@ -1,6 +1,7 @@
 package com.rin.mrlamel.feature.identity.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.rin.mrlamel.common.constant.GENDER;
 import com.rin.mrlamel.common.constant.USER_ROLE;
 import com.rin.mrlamel.common.constant.USER_STATUS;
 import com.rin.mrlamel.feature.classroom.model.ClassSchedule;
@@ -39,9 +40,9 @@ public class User {
     String email;
     @JsonIgnore
     String password;
-    @Column(nullable = false, length = 50)
+    @Column(length = 50)
     String fullName;
-    @Column(nullable = false, length = 15)
+    @Column(length = 15)
     @Pattern(regexp = "^\\+?[0-9]{10,15}$", message = "Invalid phone number format")
     String phoneNumber;
     LocalDate dob;
@@ -53,6 +54,8 @@ public class User {
     String avatarUrl;
     String address;
     boolean completedProfile = false; // Indicates if the user has completed their profile
+    @Enumerated(EnumType.STRING)
+    GENDER gender;
     @CreationTimestamp
     LocalDateTime createdAt;
     @LastModifiedDate
@@ -74,7 +77,8 @@ public class User {
         return fullName != null && !fullName.isEmpty() &&
                phoneNumber != null && !phoneNumber.isEmpty() &&
                dob != null &&
-               address != null && !address.isEmpty();
+               address != null && !address.isEmpty() &&
+               gender != null;
     }
 
 }

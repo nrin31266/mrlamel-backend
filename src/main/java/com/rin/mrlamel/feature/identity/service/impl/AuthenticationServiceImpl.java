@@ -1,5 +1,6 @@
 package com.rin.mrlamel.feature.identity.service.impl;
 
+import com.rin.mrlamel.common.constant.USER_ROLE;
 import com.rin.mrlamel.common.constant.USER_STATUS;
 import com.rin.mrlamel.common.exception.AppException;
 import com.rin.mrlamel.feature.email.service.EmailService;
@@ -7,6 +8,7 @@ import com.rin.mrlamel.common.utils.JwtTokenProvider;
 import com.rin.mrlamel.common.utils.OtpProvider;
 import com.rin.mrlamel.feature.identity.dto.req.LoginRq;
 import com.rin.mrlamel.feature.identity.dto.req.RegisterReq;
+import com.rin.mrlamel.feature.identity.dto.req.UpdateProfileRq;
 import com.rin.mrlamel.feature.identity.dto.res.AuthRes;
 import com.rin.mrlamel.feature.identity.mapper.UserMapper;
 
@@ -43,7 +45,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     UserRepository userRepository;
     JwtTokenProvider jwtTokenProvider;
     UserMapper userMapper;
-    int durationInMinutes = 1;
+    int durationInMinutes = 3;
     long accessTokenDuration = 1 * 60 * 1000; // 5 minutes
     long refreshTokenDuration = 7 * 24 * 60* 60 * 1000; // 7 days
     RefreshTokenRepository refreshTokenRepository;
@@ -77,6 +79,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         User user = userMapper.toUser(rq);
         user.setPassword(passwordEncoder.encode(rq.getPassword()));
         user.setStatus(USER_STATUS.OK);
+        user.setRole(USER_ROLE.STUDENT); // Default role is STUDENT
         UserCode userCode = new UserCode();
         userCode.setUser(user);
         String otp = otpProvider.generateOtp(6);
@@ -219,6 +222,21 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Override
     public User getUserByAuthentication(Authentication authentication) {
         return userRepository.findByEmail(jwtTokenProvider.getSubject(authentication)).orElse(null);
+    }
+
+    @Override
+    public void updateProfile(Authentication authentication, UpdateProfileRq updateProfileRq) {
+        User user = getUserByAuthentication(authentication);
+        if (user == null) {
+            throw new AppException("User not found");
+        }
+        // Update user profile fields
+        userMapper.updateUserProfile(updateProfileRq, user);
+        // Check if the profile is complete
+        if (user.isProfileComplete()) {
+            user.setCompletedProfile(true); // Set completedProfile to true if all fields are filled
+        }
+        userRepository.save(user);
     }
 
     private AuthRes getAuthRes(User user, HttpServletResponse response, RefreshToken oRefreshToken) {
