@@ -1,5 +1,6 @@
 package com.rin.mrlamel.feature.classroom.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -25,15 +26,18 @@ public class Room {
     @Column(nullable = false)
     String name; // Ví dụ: "Phòng A3"
 
-    int capacity;
+    int capacity; // Sức chứa của phòng
 
+    @JsonIgnore
     @ManyToOne(optional = false)
     @JoinColumn(name = "branch_id")
     Branch branch;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "room", orphanRemoval = true)
     List<ClassSchedule> schedules;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "room", orphanRemoval = true)
     List<ClassSession> sessions;
 }

@@ -1,6 +1,7 @@
 package com.rin.mrlamel.feature.classroom.service.impl;
 
 import com.rin.mrlamel.common.exception.AppException;
+import com.rin.mrlamel.feature.classroom.dto.BranchDto;
 import com.rin.mrlamel.feature.classroom.dto.req.CreateBranchReq;
 import com.rin.mrlamel.feature.classroom.dto.req.UpdateBranchReq;
 import com.rin.mrlamel.feature.classroom.mapper.BranchMapper;
@@ -24,8 +25,8 @@ public class BranchServiceImpl implements BranchService {
     BranchMapper branchMapper;
 
     @Override
-    public List<Branch> getAllBranches() {
-        return branchRepository.findAll();
+    public List<BranchDto> getAllBranches() {
+        return branchRepository.findAllByOrderByNameAsc();
     }
 
     @Override
@@ -59,4 +60,11 @@ public class BranchServiceImpl implements BranchService {
             throw new AppException("Branch not found with id: " + id);
         }
     }
+
+    @Override
+    public Branch getBranchById(Long id) {
+        return branchRepository.findById(id)
+                .orElseThrow(() -> new AppException("Branch not found with id: " + id));
+    }
+
 }

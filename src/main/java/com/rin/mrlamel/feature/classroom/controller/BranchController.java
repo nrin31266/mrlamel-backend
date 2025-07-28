@@ -5,6 +5,7 @@ import com.rin.mrlamel.feature.classroom.dto.req.CreateBranchReq;
 import com.rin.mrlamel.feature.classroom.dto.req.UpdateBranchReq;
 import com.rin.mrlamel.feature.classroom.model.Branch;
 import com.rin.mrlamel.feature.classroom.service.BranchService;
+import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -32,13 +33,14 @@ public class BranchController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
-    public ApiRes<Branch> createBranch(@Validated CreateBranchReq createBranchReq) {
+    public ApiRes<Branch> createBranch(@Valid @RequestBody CreateBranchReq createBranchReq) {
+        log.info("Creating branch with request: {}", createBranchReq.toString());
         var branch = branchService.createBranch(createBranchReq);
         return ApiRes.success(branch);
     }
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
-    public ApiRes<Branch> updateBranch(@PathVariable("id") Long id, @Validated UpdateBranchReq updateBranchReq) {
+    public ApiRes<Branch> updateBranch(@PathVariable("id") Long id, @Validated @RequestBody UpdateBranchReq updateBranchReq) {
         var branch = branchService.updateBranch(id, updateBranchReq);
         return ApiRes.success(branch);
     }
@@ -49,5 +51,10 @@ public class BranchController {
         return ApiRes.<Void>builder()
                 .message("Branch deleted successfully")
                 .build();
+    }
+    @GetMapping("/{id}")
+    public ApiRes<Branch> getBranchById(@PathVariable("id") Long id) {
+        var branch = branchService.getBranchById(id);
+        return ApiRes.success(branch);
     }
 }

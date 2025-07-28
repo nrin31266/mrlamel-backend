@@ -57,7 +57,9 @@ public class AuthenticationConfig {
                                 "/api/v1/auth/register",
                                 "/api/v1/auth/reset-password",
                                 "/api/v1/auth/send-reset-password",
-                                "/api/v1/auth/refresh-token").permitAll()
+                                "/api/v1/auth/refresh-token",
+                                "/api/v1/auth/logout"
+                                ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .cors(cors -> cors.configurationSource(request -> {

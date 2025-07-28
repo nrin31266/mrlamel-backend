@@ -1,5 +1,6 @@
 package com.rin.mrlamel.feature.classroom.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -28,6 +29,7 @@ public class Branch {
 
     String phone;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "branch", cascade = CascadeType.ALL, orphanRemoval = true)
     List<Room> rooms;
 

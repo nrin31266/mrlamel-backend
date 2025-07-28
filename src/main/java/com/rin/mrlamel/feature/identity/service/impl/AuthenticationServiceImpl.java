@@ -46,7 +46,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     JwtTokenProvider jwtTokenProvider;
     UserMapper userMapper;
     int durationInMinutes = 3;
-    long accessTokenDuration = 1 * 60 * 1000; // 5 minutes
+    long accessTokenDuration = 5 * 60 * 1000; // 5 minutes
     long refreshTokenDuration = 7 * 24 * 60* 60 * 1000; // 7 days
     RefreshTokenRepository refreshTokenRepository;
 
