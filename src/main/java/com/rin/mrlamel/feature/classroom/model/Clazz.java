@@ -1,9 +1,11 @@
 package com.rin.mrlamel.feature.classroom.model;
 
+import com.rin.mrlamel.common.constant.CLASS_STATUS;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.LocalDate;
@@ -25,24 +27,22 @@ public class Clazz {
     @EqualsAndHashCode.Include
     private Long id;
 
-    @Column(nullable = false, unique = true)
-    private String code; // Mã lớp như TOEIC-1, IEL-02
-
     @Column(nullable = false)
     private String name; // Tên lớp hiển thị: "Lớp TOEIC căn bản buổi tối"
 
-    private String description;
 
     private String avatarUrl; // URL ảnh đại diện lớp
 
-    private boolean isActive = true;
+//    private boolean isActive = true;
 
     @Column(nullable = false)
-    private String subject; // Ví dụ: TOEIC, IELTS, Ngữ pháp...
-
+    private LocalDate startDate; // Ngày khai giảng chính thức
+    @Enumerated(EnumType.STRING)
+    private CLASS_STATUS status; // Trạng thái của lớp: ACTIVE, INACTIVE, COMPLETED
     @Column(nullable = false)
-    private LocalDate startDate;
+    private int actualSessions; // Số buổi học thực tế cho lớp này
 
+    // End
     private LocalDate endDate;
 
     @Column(nullable = false)
@@ -51,7 +51,7 @@ public class Clazz {
     @CreationTimestamp
     private LocalDateTime createdAt;
 
-    @LastModifiedDate
+    @UpdateTimestamp
     private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "clazz", orphanRemoval = true, cascade = CascadeType.ALL)
@@ -60,5 +60,7 @@ public class Clazz {
     @OneToMany(mappedBy = "clazz", orphanRemoval = true, cascade = CascadeType.ALL)
     private List<ClassSession> sessions; // Danh sách các buổi học của lớp
 
-
+    @ManyToOne
+    @JoinColumn(name = "course_id", nullable = false)
+    private Course course; // Khóa học mà lớp này thuộc về
 }
