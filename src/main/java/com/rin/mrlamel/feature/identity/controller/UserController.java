@@ -2,17 +2,17 @@ package com.rin.mrlamel.feature.identity.controller;
 
 import com.rin.mrlamel.common.dto.PageableDto;
 import com.rin.mrlamel.common.dto.response.ApiRes;
+import com.rin.mrlamel.feature.identity.dto.req.CreateUserRq;
+import com.rin.mrlamel.feature.identity.dto.req.UpdateUserReq;
 import com.rin.mrlamel.feature.identity.model.User;
 import com.rin.mrlamel.feature.identity.service.UserService;
+import jakarta.mail.MessagingException;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -46,6 +46,28 @@ public class UserController {
                         role,
                         status
                 )
+        );
+    }
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping
+    public ApiRes<Void> createUser(@RequestBody CreateUserRq createUserRq) throws MessagingException {
+        userService.createUser(createUserRq);
+        return ApiRes.success(null);
+    }
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/{userId}")
+    public ApiRes<Void> updateUser(
+            @PathVariable String userId,
+            @RequestBody UpdateUserReq updateUserRq
+    ) {
+        userService.updateUser(userId, updateUserRq);
+        return ApiRes.success(null);
+    }
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/{userId}")
+    public ApiRes<User> getUserById(@PathVariable String userId) {
+        return ApiRes.success(
+                userService.getUserById(userId)
         );
     }
 }

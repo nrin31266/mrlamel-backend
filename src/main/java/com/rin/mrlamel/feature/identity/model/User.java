@@ -46,7 +46,7 @@ public class User {
     @Pattern(regexp = "^\\+?[0-9]{10,15}$", message = "Invalid phone number format")
     String phoneNumber;
     LocalDate dob;
-    boolean isActive = true; // Changed from Boolean to primitive boolean for better performance
+    boolean isActive = false;// Changed from Boolean to primitive boolean for better performance
     @Enumerated(EnumType.STRING)
     USER_STATUS status = USER_STATUS.OK; // Default status is OK
     @Enumerated(EnumType.STRING)
