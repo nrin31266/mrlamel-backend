@@ -1,5 +1,6 @@
 package com.rin.mrlamel.feature.classroom.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.rin.mrlamel.common.constant.CLASS_STATUS;
 import jakarta.persistence.*;
 import lombok.*;
@@ -35,15 +36,20 @@ public class Clazz {
 
 //    private boolean isActive = true;
 
-    @Column(nullable = false)
+
     private LocalDate startDate; // Ngày khai giảng chính thức
     @Enumerated(EnumType.STRING)
     private CLASS_STATUS status; // Trạng thái của lớp: ACTIVE, INACTIVE, COMPLETED
-    @Column(nullable = false)
-    private int actualSessions; // Số buổi học thực tế cho lớp này
+//    @Column(nullable = false)
+//    private int actualSessions; // Số buổi học thực tế cho lớp này
 
     // End
     private LocalDate endDate;
+
+    Integer maxSeats; // Số lượng học viên tối đa cho lớp
+
+    LocalDateTime registrationStartTime; // Ngày bắt đầu đăng ký học
+    LocalDateTime registrationEndTime; // Ngày kết thúc đăng ký học
 
     @Column(nullable = false)
     private Integer totalSessions; // Tổng số buổi học của lớp
@@ -54,9 +60,14 @@ public class Clazz {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
+    @ManyToOne
+    @JoinColumn(name = "room_id", nullable = false)
+    private Room room; // Khóa học mà lớp này thuộc về
+
     @OneToMany(mappedBy = "clazz", orphanRemoval = true, cascade = CascadeType.ALL)
     private List<ClassSchedule> schedules;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "clazz", orphanRemoval = true, cascade = CascadeType.ALL)
     private List<ClassSession> sessions; // Danh sách các buổi học của lớp
 

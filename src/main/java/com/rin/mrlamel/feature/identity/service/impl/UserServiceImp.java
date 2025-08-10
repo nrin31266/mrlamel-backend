@@ -68,7 +68,7 @@ public class UserServiceImp implements com.rin.mrlamel.feature.identity.service.
         pageable = PageRequest.of(page , size, sort);
         Page<User> pageResult = userRepository.findAll(spec, pageable);
 
-        return  pageableMapper.toUserPageableDto(pageResult);
+        return  pageableMapper.toPageableDto(pageResult);
     }
 
     @Override

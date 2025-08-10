@@ -35,6 +35,10 @@ public class Room {
 
     @JsonIgnore
     @OneToMany(mappedBy = "room", orphanRemoval = true)
+    List<Clazz> classes; // Danh sách các lớp học trong phòng này
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "room", orphanRemoval = true)
     List<ClassSchedule> schedules;
 
     @JsonIgnore
