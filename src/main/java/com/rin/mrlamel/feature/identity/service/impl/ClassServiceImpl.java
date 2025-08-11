@@ -3,6 +3,7 @@ package com.rin.mrlamel.feature.identity.service.impl;
 import com.rin.mrlamel.common.constant.CLASS_STATUS;
 import com.rin.mrlamel.common.dto.PageableDto;
 import com.rin.mrlamel.common.mapper.PageableMapper;
+import com.rin.mrlamel.common.utils.JwtTokenProvider;
 import com.rin.mrlamel.feature.classroom.dto.req.CreateClassRequest;
 import com.rin.mrlamel.feature.classroom.mapper.ClassMapper;
 import com.rin.mrlamel.feature.classroom.model.Clazz;
@@ -11,7 +12,9 @@ import com.rin.mrlamel.feature.classroom.repository.ClazzRepository;
 import com.rin.mrlamel.feature.classroom.repository.CourseRepository;
 import com.rin.mrlamel.feature.classroom.repository.RoomRepository;
 import com.rin.mrlamel.feature.identity.model.User;
+import com.rin.mrlamel.feature.identity.service.AuthenticationService;
 import com.rin.mrlamel.feature.identity.service.ClassService;
+import com.rin.mrlamel.feature.identity.service.UserService;
 import jakarta.persistence.criteria.Predicate;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +25,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -37,19 +41,19 @@ public class ClassServiceImpl implements ClassService {
     PageableMapper pageableMapper;
     RoomRepository roomRepository;
     CourseRepository courseRepository;
+    AuthenticationService authenticationService;
+    JwtTokenProvider jwtTokenProvider;
 
     @Override
-    public Clazz createClass(CreateClassRequest createClassReq) {
+    public Clazz createClass(CreateClassRequest createClassReq, Authentication authentication) {
         Clazz clazz = classMapper.toClass(createClassReq);
         clazz.setCourse(
                 courseRepository.findById(createClassReq.getCourseId())
                         .orElseThrow(() -> new IllegalArgumentException("Course not found with ID: " + createClassReq.getCourseId()))
         );
-        clazz.setRoom(
-                roomRepository.findById(createClassReq.getRoomId())
-                        .orElseThrow(() -> new IllegalArgumentException("Room not found with ID: " + createClassReq.getRoomId()))
-        );
+
         clazz.setStatus(CLASS_STATUS.DRAFT); // Default status
+        clazz.setCreatedBy(authenticationService.getUserByAuthentication(authentication));
         return clazzRepository.save(clazz);
     }
 
@@ -69,5 +73,11 @@ public class ClassServiceImpl implements ClassService {
         Page<Clazz> pageResult = clazzRepository.findAll(spec, pageable);
 
         return  pageableMapper.toPageableDto(pageResult);
+    }
+
+    @Override
+    public Clazz getClassById(Long classId) {
+        return clazzRepository.findById(classId)
+                .orElseThrow(() -> new IllegalArgumentException("Class not found with ID: " + classId));
     }
 }

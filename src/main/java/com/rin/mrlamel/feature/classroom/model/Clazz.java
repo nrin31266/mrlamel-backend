@@ -2,6 +2,7 @@ package com.rin.mrlamel.feature.classroom.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.rin.mrlamel.common.constant.CLASS_STATUS;
+import com.rin.mrlamel.feature.identity.model.User;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -60,9 +61,9 @@ public class Clazz {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
-    @ManyToOne
-    @JoinColumn(name = "room_id", nullable = false)
-    private Room room; // Khóa học mà lớp này thuộc về
+//    @ManyToOne
+//    @JoinColumn(name = "room_id", nullable = false)
+//    private Room room; // Khóa học mà lớp này thuộc về
 
     @OneToMany(mappedBy = "clazz", orphanRemoval = true, cascade = CascadeType.ALL)
     private List<ClassSchedule> schedules;
@@ -74,4 +75,9 @@ public class Clazz {
     @ManyToOne
     @JoinColumn(name = "course_id", nullable = false)
     private Course course; // Khóa học mà lớp này thuộc về
+
+
+    @ManyToOne
+    @JoinColumn(name = "create_by_id", nullable = false)
+    private User createdBy; // Người tạo lớp học, có thể là giáo viên hoặc quản trị viên
 }

@@ -46,6 +46,6 @@ public class CreateClassRequest {
 //    private List<ClassSession> sessions; // Danh sách các buổi học của lớp
     @NotNull(message = "Schedules are required")
     Long courseId; // Khóa học mà lớp này thuộc về
-    @NotNull(message = "Room ID is required")
-    Long roomId; // ID phòng học mà lớp này sẽ diễn ra
+//    @NotNull(message = "Room ID is required")
+//    Long roomId; // ID phòng học mà lớp này sẽ diễn ra
 }

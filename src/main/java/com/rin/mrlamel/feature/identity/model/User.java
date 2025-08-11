@@ -6,6 +6,7 @@ import com.rin.mrlamel.common.constant.USER_ROLE;
 import com.rin.mrlamel.common.constant.USER_STATUS;
 import com.rin.mrlamel.feature.classroom.model.ClassSchedule;
 import com.rin.mrlamel.feature.classroom.model.ClassSession;
+import com.rin.mrlamel.feature.classroom.model.Clazz;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Pattern;
@@ -72,6 +73,10 @@ public class User {
     @JsonIgnore
     @OneToMany(mappedBy = "teacher", orphanRemoval = true)
     List<ClassSession> teacherClaSessions;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "createdBy", orphanRemoval = true)
+    List<Clazz> createdByClasses;
 
     public boolean isProfileComplete() {
         return fullName != null && !fullName.isEmpty() &&

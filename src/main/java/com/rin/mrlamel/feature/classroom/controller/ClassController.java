@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -21,9 +22,10 @@ public class ClassController {
     ClassService classService;
 
     @PostMapping
-    public ApiRes<Clazz> createClass(@RequestBody CreateClassRequest createClassRequest) {
+    public ApiRes<Clazz> createClass(@RequestBody CreateClassRequest createClassRequest,
+                                     Authentication authentication) {
         log.info("Creating a new class");
-        Clazz createdClass = classService.createClass(createClassRequest);
+        Clazz createdClass = classService.createClass(createClassRequest, authentication);
         return ApiRes.success(createdClass);
     }
     @GetMapping
@@ -36,5 +38,12 @@ public class ClassController {
     ) {
         log.info("Fetching all classes with pagination and sorting");
         return ApiRes.success(classService.getAllClasses(page - 1, size, sortBy, sortDirection, status));
+    }
+
+    @GetMapping("/{classId}")
+    public ApiRes<Clazz> getClassById(@PathVariable Long classId) {
+        log.info("Fetching class with ID: {}", classId);
+        Clazz clazz = classService.getClassById(classId);
+        return ApiRes.success(clazz);
     }
 }
