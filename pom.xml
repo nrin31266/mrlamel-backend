@@ -34,7 +34,12 @@
         <lombok.version>1.18.32</lombok.version>
     </properties>
     <dependencies>
-
+        <!-- https://mvnrepository.com/artifact/cn.6tail/lunar -->
+        <dependency>
+            <groupId>cn.6tail</groupId>
+            <artifactId>lunar</artifactId>
+            <version>1.7.4</version>
+        </dependency>
 <!--         https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-starter-webmvc-ui-->
         <dependency>
             <groupId>org.springdoc</groupId>

@@ -2,8 +2,13 @@ package com.rin.mrlamel.feature.classroom.controller;
 
 import com.rin.mrlamel.common.dto.response.ApiRes;
 import com.rin.mrlamel.feature.classroom.dto.req.CreateClassRequest;
+import com.rin.mrlamel.feature.classroom.dto.req.CreateClassScheduleReq;
+import com.rin.mrlamel.feature.classroom.dto.req.MarkClassOnReadyRq;
+import com.rin.mrlamel.feature.classroom.dto.req.UpdateClassScheduleReq;
+import com.rin.mrlamel.feature.classroom.model.ClassSchedule;
+import com.rin.mrlamel.feature.classroom.model.ClassSession;
 import com.rin.mrlamel.feature.classroom.model.Clazz;
-import com.rin.mrlamel.feature.identity.service.ClassService;
+import com.rin.mrlamel.feature.classroom.service.ClassService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -11,6 +16,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -45,5 +52,44 @@ public class ClassController {
         log.info("Fetching class with ID: {}", classId);
         Clazz clazz = classService.getClassById(classId);
         return ApiRes.success(clazz);
+    }
+
+    @PostMapping("/schedules")
+    public ApiRes<ClassSchedule> createClassSchedule(@RequestBody CreateClassScheduleReq createClassScheduleReq) {
+        log.info("Creating class schedule");
+        return ApiRes.success(classService.createClassSchedule(createClassScheduleReq));
+    }
+
+    @PutMapping("/schedules/{classScheduleId}")
+    public ApiRes<ClassSchedule> updateClassSchedule(
+            @PathVariable Long classScheduleId,
+            @RequestBody UpdateClassScheduleReq updateClassScheduleReq
+    ) {
+        log.info("Updating class schedule with ID: {}", classScheduleId);
+        ClassSchedule updatedClassSchedule = classService.updateClassSchedule(classScheduleId, updateClassScheduleReq);
+        return ApiRes.success(updatedClassSchedule);
+    }
+
+    @DeleteMapping("/schedules/{classScheduleId}")
+    public ApiRes<Void> deleteClassSchedule(@PathVariable Long classScheduleId) {
+        log.info("Deleting class schedule with ID: {}", classScheduleId);
+        classService.deleteClassSchedule(classScheduleId);
+        return ApiRes.success(null);
+    }
+
+    @PutMapping("/mark-ready/{clazzId}")
+    public ApiRes<Clazz> markClassOnReady(
+            @PathVariable Long clazzId,
+            @RequestBody MarkClassOnReadyRq markClassOnReadyRq
+    ) {
+        log.info("Marking class with ID: {} as ready", clazzId);
+        return ApiRes.success(classService.markClassOnReady(clazzId, markClassOnReadyRq));
+    }
+
+    @GetMapping("/{classId}/sessions")
+    public ApiRes<List<ClassSession>> getClassSessionsByClassId(@PathVariable Long classId) {
+        log.info("Fetching class sessions for class ID: {}", classId);
+        List<ClassSession> classSessions = classService.getClassSessionsByClassId(classId);
+        return ApiRes.success(classSessions);
     }
 }

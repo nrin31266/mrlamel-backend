@@ -1,5 +1,6 @@
 package com.rin.mrlamel.feature.classroom.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.rin.mrlamel.feature.identity.model.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -7,6 +8,7 @@ import lombok.experimental.FieldDefaults;
 
 import java.time.DayOfWeek;
 import java.time.LocalTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -23,6 +25,7 @@ public class ClassSchedule {
     @EqualsAndHashCode.Include
     private Long id;
 
+    @JsonIgnore
     @ManyToOne(optional = false)
     @JoinColumn(name = "class_id")
     private Clazz clazz;
@@ -38,12 +41,15 @@ public class ClassSchedule {
     @Column(nullable = false)
     private LocalTime  endTime;
 
-    @ManyToOne(optional = false)
+    @ManyToOne
     @JoinColumn(name = "teacher_id")
     private User teacher;
 
-    @ManyToOne(optional = false)
+    @ManyToOne
     @JoinColumn(name = "room_id")
     private Room room;
+    @JsonIgnore
+    @OneToMany(mappedBy = "baseSchedule", cascade = CascadeType.ALL, orphanRemoval = true)
+    List<ClassSession> classSessions; // Danh sách các buổi học dựa trên lịch này
 
 }
