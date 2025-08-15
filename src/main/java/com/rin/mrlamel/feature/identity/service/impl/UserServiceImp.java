@@ -3,6 +3,7 @@ package com.rin.mrlamel.feature.identity.service.impl;
 import com.rin.mrlamel.common.dto.PageableDto;
 import com.rin.mrlamel.common.mapper.PageableMapper;
 import com.rin.mrlamel.common.utils.OtpProvider;
+import com.rin.mrlamel.feature.classroom.model.ClassSession;
 import com.rin.mrlamel.feature.email.service.EmailService;
 import com.rin.mrlamel.feature.identity.dto.req.CreateUserRq;
 import com.rin.mrlamel.feature.identity.dto.req.UpdateUserReq;
@@ -23,9 +24,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -119,4 +118,75 @@ public class UserServiceImp implements com.rin.mrlamel.feature.identity.service.
         return userRepository.findById(Long.valueOf(userId))
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
     }
+
+    @Override
+    public List<User> getAvailableTeachersForSessions(List<ClassSession> sessions) {
+        if (sessions.isEmpty()) return Collections.emptyList();
+
+        // Bắt đầu với session đầu tiên
+        Set<User> available = new HashSet<>(userRepository.getAvailableTeachersForSession(
+                sessions.get(0).getDate(),
+                sessions.get(0).getStartTime(),
+                sessions.get(0).getEndTime(),
+                sessions.get(0).getId() != null ? sessions.get(0).getId() : 0L
+        ));
+
+        for (int i = 1; i < sessions.size(); i++) {
+            if(available.isEmpty()) break; // Nếu không còn giáo viên nào rảnh thì dừng
+            ClassSession session = sessions.get(i);
+            List<User> freeForSession = userRepository.getAvailableTeachersForSession(
+                    session.getDate(),
+                    session.getStartTime(),
+                    session.getEndTime(),
+                    session.getId() != null ? session.getId() : 0L
+            );
+            available.retainAll(freeForSession); // giữ giao cho tất cả session
+        }
+
+        return new ArrayList<>(available);
+    }
+
+    @Override
+    public boolean isTeacherAvailableForAllSessions(Long teacherId, List<ClassSession> sessions) {
+        for (ClassSession session : sessions) {
+            long conflicts = userRepository.countConflictingSessions(
+                    teacherId,
+                    session.getDate(),
+                    session.getStartTime(),
+                    session.getEndTime(),
+                    session.getId() != null ? session.getId() : 0L
+            );
+            if (conflicts > 0) {
+                return false; // Teacher bận
+            }
+        }
+        return true; // Teacher rảnh
+    }
+
+    @Override
+    public List<User> getAllTeachers() {
+        return userRepository.findAllTeachers();
+    }
+
+    @Override
+    public void assignTeacherToSessions(Long teacherId, List<ClassSession> classSessions) {
+        // Kiểm tra xem teacherId có hợp lệ không
+        User teacher = userRepository.findById(teacherId)
+                .orElseThrow(() -> new IllegalArgumentException("Teacher not found with id: " + teacherId));
+
+        // Kiểm tra xem giáo viên có khả dụng cho tất cả session không
+        if (!isTeacherAvailableForAllSessions(teacherId, classSessions)) {
+            throw new IllegalArgumentException("Teacher with ID " + teacherId + " is not available for all provided sessions.");
+        }
+
+        // Gán giáo viên cho từng session
+        for (ClassSession session : classSessions) {
+            session.setTeacher(teacher);
+        }
+
+        teacher.getTeacherClassSessions().addAll(classSessions); // Cập nhật danh sách session của giáo viên
+        // Lưu tất cả session đã cập nhật
+        userRepository.save(teacher);
+    }
+
 }

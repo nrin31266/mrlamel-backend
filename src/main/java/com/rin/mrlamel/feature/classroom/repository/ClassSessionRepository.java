@@ -15,4 +15,7 @@ public interface ClassSessionRepository extends JpaRepository<ClassSession, Long
             ORDER BY cs.date ASC
             """)
     List<ClassSession> findByClazzId(Long clazzId);
+
+    List<ClassSession> findByBaseScheduleId(Long classScheduleId);
+
 }

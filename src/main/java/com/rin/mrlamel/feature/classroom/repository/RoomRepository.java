@@ -4,30 +4,60 @@ import com.rin.mrlamel.feature.classroom.model.ClassSession;
 import com.rin.mrlamel.feature.classroom.model.Room;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
-import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
-import java.util.Optional;
 
 public interface RoomRepository extends JpaRepository<Room, Long> {
+
     boolean existsByCode(String code);
 
     List<Room> findByBranchId(Long branchId);
 
+    /**
+     * Lấy danh sách Room khả dụng cho 1 session chưa bắt đầu
+     */
+    @Query("""
+        SELECT r
+        FROM Room r
+        WHERE r.id NOT IN (
+            SELECT s.room.id
+            FROM ClassSession s
+            WHERE s.date = :date
+              AND s.startTime < :endTime
+              AND s.endTime > :startTime
+              AND s.id <> :sessionId
+              AND (s.date > CURRENT_DATE OR (s.date = CURRENT_DATE AND s.startTime >= CURRENT_TIME))
+        )
+    """)
+    List<Room> getAvailableRoomForSession(
+            @Param("date") LocalDate date,
+            @Param("startTime") LocalTime startTime,
+            @Param("endTime") LocalTime endTime,
+            @Param("sessionId") Long sessionId // session hiện tại để bỏ qua
+    );
 
-//    @Query("""
-//
-//            SELECT CASE WHEN COUNT(r) > 0 THEN true ELSE false END
-//            FROM Room r
-//            WHERE r.id = :roomId
-//            AND NOT EXISTS (
-//                SELECT cs FROM ClassSession cs
-//                WHERE cs.room.id = r.id
-//                AND cs.date = :dayOfWeek
-//                AND (
-//                    (cs.startTime < :endTime AND cs.endTime > :startTime)
-//                )
-//            )
-//            """)
-//    boolean isRoomAvailable(Long roomId);
+    /**
+     * Đếm số session xung đột với Room chưa bắt đầu
+     * Chỉ tính session chưa bắt đầu (ngày mai trở đi hoặc hôm nay nhưng chưa tới giờ bắt đầu)
+     */
+    @Query("""
+        SELECT COUNT(s)
+        FROM ClassSession s
+        WHERE s.room.id = :roomId
+          AND s.date = :date
+          AND s.startTime < :endTime
+          AND s.endTime > :startTime
+          AND s.id <> :sessionId
+          AND (s.date > CURRENT_DATE OR (s.date = CURRENT_DATE AND s.startTime >= CURRENT_TIME))
+    """)
+    long countConflictingSessions(
+            @Param("roomId") Long roomId,
+            @Param("date") LocalDate date,
+            @Param("startTime") LocalTime startTime,
+            @Param("endTime") LocalTime endTime,
+            @Param("sessionId") Long sessionId
+    );
 }

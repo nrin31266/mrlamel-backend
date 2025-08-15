@@ -27,12 +27,18 @@ public class CommonController {
 
     HolidayService holidayService;
     @GetMapping("/holidays/solar")
-    public ApiRes<List<HolidaySolarDto>> getHolidays(@RequestParam(required = false) Integer year) {
-        // Ví dụ: trả về danh sách các ngày lễ
-        // Bạn có thể gọi service để lấy dữ liệu từ database hoặc file JSON
-        if (year == null) {
-            year = java.time.LocalDate.now().getYear(); // Nếu không có năm, sử dụng năm hiện tại
+    public ApiRes<List<HolidaySolarDto>> getHolidays(
+            @RequestParam(required = false) List<Integer> years
+    ) {
+        // Nếu frontend không gửi gì, dùng năm hiện tại làm mặc định
+        if (years == null || years.isEmpty()) {
+            years = List.of(java.time.LocalDate.now().getYear());
         }
-        return ApiRes.success(holidayService.getHolidaySolarForYear(year));
+
+        // Lấy danh sách holiday gộp theo các năm, đã xử lý trùng ngày
+        List<HolidaySolarDto> holidays = holidayService.getHolidayDtosForYears(years);
+
+        return ApiRes.success(holidays);
     }
+
 }

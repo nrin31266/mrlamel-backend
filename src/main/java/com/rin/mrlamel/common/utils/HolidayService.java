@@ -23,18 +23,47 @@ public class HolidayService {
 
     ObjectMapper objectMapper;
 
-    public List<LocalDate> getHolidaysForYear(int year) {
-        try {
-            List<HolidaySolarDto> holidays = getHolidaySolarForYear(year);
-
-
-            return holidays.stream()
-                    .map(HolidaySolarDto::getDate)
-                    .toList();
-        } catch (Exception e) {
-            throw new RuntimeException("Lỗi khi load danh sách ngày lễ: " + e.getMessage(), e);
+    /**
+     * Trả về Set<LocalDate> để backend check dễ dàng, loại bỏ trùng ngày
+     */
+    public Set<LocalDate> getHolidayDatesForYears(List<Integer> years) {
+        Set<LocalDate> dates = new HashSet<>();
+        for (Integer year : years) {
+            List<HolidaySolarDto> dtos = getHolidaySolarForYear(year);
+            for (HolidaySolarDto dto : dtos) {
+                dates.add(dto.getDate());
+            }
         }
+        return dates;
     }
+
+    /**
+     * Trả về đầy đủ HolidaySolarDto cho frontend (có thể trùng ngày, giữ tên lễ)
+     */
+    public List<HolidaySolarDto> getHolidayDtosForYears(List<Integer> years) {
+        Map<LocalDate, List<String>> map = new HashMap<>();
+
+        for (Integer year : years) {
+            List<HolidaySolarDto> dtos = getHolidaySolarForYear(year);
+            for (HolidaySolarDto dto : dtos) {
+                map.computeIfAbsent(dto.getDate(), k -> new ArrayList<>()).add(dto.getName());
+            }
+        }
+
+        List<HolidaySolarDto> result = new ArrayList<>();
+        for (Map.Entry<LocalDate, List<String>> entry : map.entrySet()) {
+            HolidaySolarDto dto = HolidaySolarDto.builder()
+                    .date(entry.getKey())
+                    .name(String.join(", ", entry.getValue())) // gộp tên lễ cùng ngày
+                    .build();
+            result.add(dto);
+        }
+
+        result.sort(Comparator.comparing(HolidaySolarDto::getDate));
+        return result;
+    }
+
+
     public List<HolidaySolarDto> getHolidaySolarForYear(int year) {
         try {
             InputStream is = getClass().getResourceAsStream("/holidays.json");

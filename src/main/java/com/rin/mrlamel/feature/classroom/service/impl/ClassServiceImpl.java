@@ -33,9 +33,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -172,7 +170,16 @@ public class ClassServiceImpl implements ClassService {
                 )
                 .toList();
         LocalDate currentDate  = markClassOnReadyRq.getStartDate();
-        List<LocalDate> holidays = holidayService.getHolidaysForYear(LocalDate.now().getYear());
+
+        // Ước lượng endDate dựa trên số session và schedule, dư hẳn 1 năm cho an toàn
+        LocalDate estimatedEndDate = currentDate.plusWeeks(totalSessions / schedules.size() + 1);
+        List<Integer> years = new ArrayList<>();
+        for (int y = currentDate.getYear(); y <= estimatedEndDate.getYear() + 1; y++) {
+            years.add(y);
+        }
+        Set<LocalDate> holidays = holidayService.getHolidayDatesForYears(years);
+
+
 
         while(sessions.size() < totalSessions){
             DayOfWeek currentDayOfWeek = currentDate.getDayOfWeek();
@@ -209,6 +216,7 @@ public class ClassServiceImpl implements ClassService {
 
         clazz.setStatus(CLASS_STATUS.READY);
         clazz.setStartDate(markClassOnReadyRq.getStartDate());
+        clazz.setEndDate(sessions.getLast().getDate().plusDays(1)); // Ngày kết thúc dự kiến là ngày sau buổi cuối cùng
         clazz.getSessions().clear(); // Xoá session cũ
         clazz.getSessions().addAll(sessions); // Thêm session mới
         return clazzRepository.save(clazz);
@@ -218,5 +226,16 @@ public class ClassServiceImpl implements ClassService {
     public List<ClassSession> getClassSessionsByClassId(Long classId) {
         Clazz clazz = getClassById(classId);
         return classSessionRepository.findByClazzId(clazz.getId());
+    }
+
+    @Override
+    public List<ClassSession> getClassSessionsByClassScheduleId(Long classScheduleId) {
+        return classSessionRepository.findByBaseScheduleId(classScheduleId);
+    }
+
+    @Override
+    public ClassSession getClassSessionById(Long classSessionId) {
+        return classSessionRepository.findById(classSessionId)
+                .orElseThrow(() -> new AppException("Class session not found with ID: " + classSessionId));
     }
 }

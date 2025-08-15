@@ -68,11 +68,11 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     List<RefreshToken> refreshTokens;
     @JsonIgnore
-    @OneToMany(mappedBy = "teacher", orphanRemoval = true)
+    @OneToMany(mappedBy = "teacher", orphanRemoval = true, cascade = CascadeType.ALL)
     List<ClassSchedule> teacherClassSchedules;
     @JsonIgnore
-    @OneToMany(mappedBy = "teacher", orphanRemoval = true)
-    List<ClassSession> teacherClaSessions;
+    @OneToMany(mappedBy = "teacher", orphanRemoval = true, cascade = CascadeType.ALL)
+    List<ClassSession> teacherClassSessions;
 
     @JsonIgnore
     @OneToMany(mappedBy = "createdBy", orphanRemoval = true)

@@ -4,6 +4,9 @@ import com.rin.mrlamel.common.dto.response.ApiRes;
 import com.rin.mrlamel.feature.classroom.dto.RoomDto;
 import com.rin.mrlamel.feature.classroom.dto.req.CreateRoomReq;
 import com.rin.mrlamel.feature.classroom.dto.req.UpdateRoomReq;
+import com.rin.mrlamel.feature.classroom.model.ClassSession;
+import com.rin.mrlamel.feature.classroom.model.Room;
+import com.rin.mrlamel.feature.classroom.service.ClassService;
 import com.rin.mrlamel.feature.classroom.service.RoomService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -22,6 +26,7 @@ import java.util.List;
 @PreAuthorize("hasAuthority('ROLE_ADMIN')")
 public class RoomController {
     RoomService roomService;
+    ClassService classService;
     // Define your endpoints here, e.g.:
     @GetMapping
     public ApiRes<List<RoomDto>> getAllRooms() {
@@ -59,5 +64,45 @@ public class RoomController {
         roomService.deleteRoom(roomId);
         return ApiRes.success(null);
     }
+
+    @GetMapping("/available")
+    public ApiRes<List<Room>> getAvailableRoomsForSessions(
+            @RequestParam(required = false) Long scheduleId,
+            @RequestParam(required = false) Long sessionId,
+            @RequestParam(required = false) Long clazzId,
+            @RequestParam(name = "mode") String mode
+    ) {
+        if(mode.equals("by-clazz") && clazzId != null) {
+            return ApiRes.success(roomService.getAvailableRoomsForSessions(classService.getClassSessionsByClassId(clazzId)));
+        } else if(mode.equals("by-schedule") && scheduleId != null) {
+            return ApiRes.success(roomService.getAvailableRoomsForSessions(classService.getClassSessionsByClassScheduleId(scheduleId)));
+        } else if(mode.equals("by-session") && sessionId != null) {
+            return ApiRes.success(roomService.getAvailableRoomsForSessions(List.of(classService.getClassSessionById(sessionId))));
+        }
+        return ApiRes.success(new ArrayList<>());
+    }
+
+    @PutMapping("/assignment")
+    public ApiRes<Void> assignRoom(
+            @RequestParam(required = false) Long scheduleId,
+            @RequestParam(required = false) Long sessionId,
+            @RequestParam(required = false) Long clazzId,
+            @RequestParam(name = "mode") String mode,
+            @RequestParam Long roomId
+    ) {
+        List<ClassSession> classSessions;
+        if (mode.equals("by-clazz") && clazzId != null) {
+            classSessions = classService.getClassSessionsByClassId(clazzId);
+        } else if (mode.equals("by-schedule") && scheduleId != null) {
+            classSessions = classService.getClassSessionsByClassScheduleId(scheduleId);
+        } else if (mode.equals("by-session") && sessionId != null) {
+            classSessions = List.of(classService.getClassSessionById(sessionId));
+        } else {
+            classSessions = new ArrayList<>();
+        }
+        roomService.assignRoomToSessions(roomId, classSessions);
+        return ApiRes.success(null);
+    }
+
 
 }

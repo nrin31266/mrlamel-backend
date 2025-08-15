@@ -40,5 +40,9 @@ public interface ClassService {
     );
 
     List<ClassSession> getClassSessionsByClassId(Long classId);
+    List<ClassSession> getClassSessionsByClassScheduleId(Long classScheduleId);
+    ClassSession getClassSessionById(Long classSessionId);
+
+
 
 }
