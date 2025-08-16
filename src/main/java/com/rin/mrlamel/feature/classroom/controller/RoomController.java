@@ -7,6 +7,7 @@ import com.rin.mrlamel.feature.classroom.dto.req.UpdateRoomReq;
 import com.rin.mrlamel.feature.classroom.model.ClassSession;
 import com.rin.mrlamel.feature.classroom.model.Room;
 import com.rin.mrlamel.feature.classroom.service.ClassService;
+import com.rin.mrlamel.feature.classroom.service.RoomAssignmentService;
 import com.rin.mrlamel.feature.classroom.service.RoomService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,7 @@ import java.util.List;
 public class RoomController {
     RoomService roomService;
     ClassService classService;
+    RoomAssignmentService roomAssignmentService;
     // Define your endpoints here, e.g.:
     @GetMapping
     public ApiRes<List<RoomDto>> getAllRooms() {
@@ -90,19 +92,15 @@ public class RoomController {
             @RequestParam(name = "mode") String mode,
             @RequestParam Long roomId
     ) {
-        List<ClassSession> classSessions;
-        if (mode.equals("by-clazz") && clazzId != null) {
-            classSessions = classService.getClassSessionsByClassId(clazzId);
-        } else if (mode.equals("by-schedule") && scheduleId != null) {
-            classSessions = classService.getClassSessionsByClassScheduleId(scheduleId);
-        } else if (mode.equals("by-session") && sessionId != null) {
-            classSessions = List.of(classService.getClassSessionById(sessionId));
-        } else {
-            classSessions = new ArrayList<>();
+        switch (mode) {
+            case "by-clazz" -> roomAssignmentService.assignRoomByClazz(clazzId, roomId);
+            case "by-schedule" -> roomAssignmentService.assignRoomBySchedule(scheduleId, roomId);
+            case "by-session" -> roomAssignmentService.assignRoomBySession(sessionId, roomId);
+            default -> throw new IllegalArgumentException("Invalid mode: " + mode);
         }
-        roomService.assignRoomToSessions(roomId, classSessions);
         return ApiRes.success(null);
     }
+
 
 
 }

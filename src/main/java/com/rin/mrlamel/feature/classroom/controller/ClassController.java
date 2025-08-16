@@ -1,10 +1,8 @@
 package com.rin.mrlamel.feature.classroom.controller;
 
 import com.rin.mrlamel.common.dto.response.ApiRes;
-import com.rin.mrlamel.feature.classroom.dto.req.CreateClassRequest;
-import com.rin.mrlamel.feature.classroom.dto.req.CreateClassScheduleReq;
-import com.rin.mrlamel.feature.classroom.dto.req.MarkClassOnReadyRq;
-import com.rin.mrlamel.feature.classroom.dto.req.UpdateClassScheduleReq;
+import com.rin.mrlamel.feature.classroom.dto.req.*;
+import com.rin.mrlamel.feature.classroom.model.ClassEnrollment;
 import com.rin.mrlamel.feature.classroom.model.ClassSchedule;
 import com.rin.mrlamel.feature.classroom.model.ClassSession;
 import com.rin.mrlamel.feature.classroom.model.Clazz;
@@ -91,5 +89,23 @@ public class ClassController {
         log.info("Fetching class sessions for class ID: {}", classId);
         List<ClassSession> classSessions = classService.getClassSessionsByClassId(classId);
         return ApiRes.success(classSessions);
+    }
+
+    @GetMapping("/{clazzId}/users/check")
+    public ApiRes<?> checkStudentBeforeAddingToClass(
+            @RequestParam String studentEmail,
+            @PathVariable Long clazzId
+    ) {
+        log.info("Checking student before adding to class with ID: {}", clazzId);
+        return ApiRes.success(classService.checkStudentBeforeAddingToClass(studentEmail, clazzId));
+    }
+
+    @PostMapping("/{clazzId}/users")
+    public ApiRes<ClassEnrollment> addStudentToClass(
+            @PathVariable Long clazzId,
+            @RequestBody AddStudentToClassRq addStudentToClassRq
+    ) {
+        log.info("Adding student to class with ID: {}", clazzId);
+        return ApiRes.success(classService.addStudentToClass(addStudentToClassRq));
     }
 }

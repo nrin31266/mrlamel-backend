@@ -2,22 +2,24 @@ package com.rin.mrlamel.feature.classroom.service.impl;
 
 import com.rin.mrlamel.common.constant.CLASS_SECTION_STATUS;
 import com.rin.mrlamel.common.constant.CLASS_STATUS;
+import com.rin.mrlamel.common.constant.USER_ROLE;
+import com.rin.mrlamel.common.constant.USER_STATUS;
 import com.rin.mrlamel.common.dto.PageableDto;
 import com.rin.mrlamel.common.exception.AppException;
 import com.rin.mrlamel.common.mapper.PageableMapper;
 import com.rin.mrlamel.common.utils.HolidayService;
-import com.rin.mrlamel.common.utils.JwtTokenProvider;
-import com.rin.mrlamel.feature.classroom.dto.req.CreateClassRequest;
-import com.rin.mrlamel.feature.classroom.dto.req.CreateClassScheduleReq;
-import com.rin.mrlamel.feature.classroom.dto.req.MarkClassOnReadyRq;
-import com.rin.mrlamel.feature.classroom.dto.req.UpdateClassScheduleReq;
+import com.rin.mrlamel.feature.classroom.dto.StudentCheckDto;
+import com.rin.mrlamel.feature.classroom.dto.req.*;
 import com.rin.mrlamel.feature.classroom.mapper.ClassMapper;
+import com.rin.mrlamel.feature.classroom.model.ClassEnrollment;
 import com.rin.mrlamel.feature.classroom.model.ClassSchedule;
 import com.rin.mrlamel.feature.classroom.model.ClassSession;
 import com.rin.mrlamel.feature.classroom.model.Clazz;
 import com.rin.mrlamel.feature.classroom.repository.*;
+import com.rin.mrlamel.feature.identity.model.User;
 import com.rin.mrlamel.feature.identity.service.AuthenticationService;
 import com.rin.mrlamel.feature.classroom.service.ClassService;
+import com.rin.mrlamel.feature.identity.service.UserService;
 import jakarta.persistence.criteria.Predicate;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +35,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Slf4j
@@ -46,10 +49,11 @@ public class ClassServiceImpl implements ClassService {
     RoomRepository roomRepository;
     CourseRepository courseRepository;
     AuthenticationService authenticationService;
-    JwtTokenProvider jwtTokenProvider;
+    UserService userService;
     ClassScheduleRepository classScheduleRepository;
     ClassSessionRepository classSessionRepository;
     HolidayService holidayService;
+    ClassEnrollmentRepository classEnrollmentRepository;
 
     @Override
     public Clazz createClass(CreateClassRequest createClassReq, Authentication authentication) {
@@ -76,10 +80,10 @@ public class ClassServiceImpl implements ClassService {
         };
         Pageable pageable;
         Sort sort = Sort.by(Sort.Direction.fromString(sortDirection), sortBy);
-        pageable = PageRequest.of(page , size, sort);
+        pageable = PageRequest.of(page, size, sort);
         Page<Clazz> pageResult = clazzRepository.findAll(spec, pageable);
 
-        return  pageableMapper.toPageableDto(pageResult);
+        return pageableMapper.toPageableDto(pageResult);
     }
 
     @Override
@@ -97,11 +101,12 @@ public class ClassServiceImpl implements ClassService {
 
         Clazz clazz = getClassById(createClassScheduleReq.getClassId());
 
-        if(classScheduleRepository.existsByClazzIdAndDayOfWeekAndTimeOverlap(
+        if (classScheduleRepository.existsByClazzIdAndDayOfWeekAndTimeOverlap(
                 createClassScheduleReq.getClassId(),
                 dayOfWeek,
                 createClassScheduleReq.getStartTime(),
-                createClassScheduleReq.getEndTime()
+                createClassScheduleReq.getEndTime(),
+                null
         )) {
             throw new AppException("Class schedule overlaps with existing schedule");
         }
@@ -123,14 +128,15 @@ public class ClassServiceImpl implements ClassService {
         ClassSchedule classSchedule = classScheduleRepository.findById(classScheduleId)
                 .orElseThrow(() -> new AppException("Class schedule not found with ID: " + classScheduleId));
         Clazz clazz = classSchedule.getClazz();
-        if(clazz.getStatus() != CLASS_STATUS.DRAFT) {
+        if (clazz.getStatus() != CLASS_STATUS.DRAFT) {
             throw new AppException("Cannot update class schedule for a class that is not in DRAFT status");
         }
-        if(classScheduleRepository.existsByClazzIdAndDayOfWeekAndTimeOverlap(
+        if (classScheduleRepository.existsByClazzIdAndDayOfWeekAndTimeOverlap(
                 clazz.getId(),
                 dayOfWeek,
                 updateClassScheduleReq.getStartTime(),
-                updateClassScheduleReq.getEndTime()
+                updateClassScheduleReq.getEndTime(),
+                classScheduleId // Pass the current schedule ID to avoid checking against itself
         )) {
             throw new AppException("Class schedule overlaps with existing schedule");
         }
@@ -145,7 +151,7 @@ public class ClassServiceImpl implements ClassService {
         ClassSchedule classSchedule = classScheduleRepository.findById(classScheduleId)
                 .orElseThrow(() -> new AppException("Class schedule not found with ID: " + classScheduleId));
         Clazz clazz = classSchedule.getClazz();
-        if(clazz.getStatus() != CLASS_STATUS.DRAFT) {
+        if (clazz.getStatus() != CLASS_STATUS.DRAFT) {
             throw new AppException("Cannot delete class schedule for a class that is not in DRAFT status");
         }
         classScheduleRepository.delete(classSchedule);
@@ -153,7 +159,7 @@ public class ClassServiceImpl implements ClassService {
 
     @Override
     public Clazz markClassOnReady(Long clazzId,
-                                               MarkClassOnReadyRq markClassOnReadyRq) {
+                                  MarkClassOnReadyRq markClassOnReadyRq) {
         Clazz clazz = getClassById(clazzId);
         if (clazz.getStatus() != CLASS_STATUS.DRAFT) {
             throw new AppException("Cannot mark class as ready when it is not in DRAFT status");
@@ -169,7 +175,7 @@ public class ClassServiceImpl implements ClassService {
                                 .thenComparing(ClassSchedule::getStartTime)
                 )
                 .toList();
-        LocalDate currentDate  = markClassOnReadyRq.getStartDate();
+        LocalDate currentDate = markClassOnReadyRq.getStartDate();
 
         // Ước lượng endDate dựa trên số session và schedule, dư hẳn 1 năm cho an toàn
         LocalDate estimatedEndDate = currentDate.plusWeeks(totalSessions / schedules.size() + 1);
@@ -180,13 +186,14 @@ public class ClassServiceImpl implements ClassService {
         Set<LocalDate> holidays = holidayService.getHolidayDatesForYears(years);
 
 
-
-        while(sessions.size() < totalSessions){
+        while (sessions.size() < totalSessions) {
             DayOfWeek currentDayOfWeek = currentDate.getDayOfWeek();
             // Tìm schedule khớp với ngày hiện tại
-            for (ClassSchedule schedule: schedules){
-                if(sessions.size() >= totalSessions){break;}// Đã đủ số buổi học
-                if(schedule.getDayOfWeek().equals(currentDayOfWeek)){
+            for (ClassSchedule schedule : schedules) {
+                if (sessions.size() >= totalSessions) {
+                    break;
+                }// Đã đủ số buổi học
+                if (schedule.getDayOfWeek().equals(currentDayOfWeek)) {
                     if (markClassOnReadyRq.getUnavailableDates() != null &&
                         markClassOnReadyRq.getUnavailableDates().contains(currentDate)) {
                         break;
@@ -238,4 +245,144 @@ public class ClassServiceImpl implements ClassService {
         return classSessionRepository.findById(classSessionId)
                 .orElseThrow(() -> new AppException("Class session not found with ID: " + classSessionId));
     }
+
+    @Override
+    public void assignRoomToSchedules(Long roomId, List<ClassSchedule> classSchedules) {
+        if (roomId == null || classSchedules == null || classSchedules.isEmpty()) {
+            throw new AppException("Room ID and class schedules are required for assignment");
+        }
+
+        var room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new AppException("Room not found with ID: " + roomId));
+
+        for (ClassSchedule schedule : classSchedules) {
+            schedule.setRoom(room);
+        }
+        classScheduleRepository.saveAll(classSchedules);
+    }
+
+    @Override
+    public void assignTeacherToSchedules(Long teacherId, List<ClassSchedule> classSchedules) {
+        if (teacherId == null || classSchedules == null || classSchedules.isEmpty()) {
+            throw new AppException("Teacher ID and class schedules are required for assignment");
+        }
+
+        var teacher = userService.getUserById(teacherId);
+        if (teacher == null) {
+            throw new AppException("Teacher not found with ID: " + teacherId);
+        }
+
+        for (ClassSchedule schedule : classSchedules) {
+            schedule.setTeacher(teacher);
+        }
+        classScheduleRepository.saveAll(classSchedules);
+    }
+
+    @Override
+    public ClassSchedule getClassScheduleById(Long classScheduleId) {
+        return classScheduleRepository.findById(classScheduleId)
+                .orElseThrow(() -> new AppException("Class schedule not found with ID: " + classScheduleId));
+    }
+
+    @Override
+    public StudentCheckDto checkStudentBeforeAddingToClass(String studentEmail, Long classId) {
+        boolean exists;       // user có tồn tại trong hệ thống không
+        boolean canEnroll;    // có thể thêm vào lớp hay không
+        String reason;        // lý do không thể enroll (role/status)
+        User user;         // thông tin user nếu có, null nếu không tìm thấy
+        Clazz clazz = getClassById(classId); // Có thể throw AppException nếu không tìm thấy lớp
+
+        try {
+            user = userService.getUserByEmail(studentEmail);
+            if (user == null) {
+                exists = false;
+                canEnroll = true;
+                reason = "Student not found with email: " + studentEmail;
+            } else if (!user.getRole().equals(USER_ROLE.STUDENT)) {
+                exists = true;
+                canEnroll = false;
+                reason = "User is not a student";
+            } else if (user.getStatus() != USER_STATUS.OK) {
+                exists = true;
+                canEnroll = false;
+                reason = "The status of user is " + user.getStatus() + ", cannot enroll";
+            } else if (classEnrollmentRepository.existsByClazzIdAndAttendeeId(clazz.getId(), user.getId())) {
+                exists = true;
+                canEnroll = false;
+                reason = "User is already enrolled in this class";
+            } else if (clazz.getStatus() == CLASS_STATUS.DRAFT || clazz.getStatus() == CLASS_STATUS.FINISHED || clazz.getStatus() == CLASS_STATUS.CANCELLED) {
+                exists = true;
+                canEnroll = false;
+                reason = "Class is not in a valid state for enrollment: " + clazz.getStatus();
+            } else {
+                List<Clazz> classesConflict = clazzRepository.findClassesWithFutureSessionConflict(clazz.getId(), user.getId());
+                if (!classesConflict.isEmpty()) {
+                    exists = true;
+                    canEnroll = false;
+                    reason = "User has future class sessions that conflict with this class: " + classesConflict.stream()
+                            .map(Clazz::getName)
+                            .reduce((a, b) -> a + ", " + b)
+                            .orElse("Unknown classes") + ". Total conflict( " + classesConflict.size() + " )"
+                             + ". Please check the schedule of the user";
+                } else {
+                    exists = true;
+                    canEnroll = true;
+                    reason = "User can be enrolled";
+                }
+            }
+        } catch (AppException e) {
+            user = null;
+            exists = false;
+            reason = "Student not found with email: " + studentEmail;
+            canEnroll = false;
+        }
+        return StudentCheckDto.builder()
+                .exists(exists)
+                .user(user)
+                .canEnroll(canEnroll)
+                .reason(reason)
+                .build();
+    }
+
+    @Override
+    public ClassEnrollment addStudentToClass(AddStudentToClassRq addStudentToClassRq) {
+        User user;
+        if(addStudentToClassRq.getClassId() == null) {
+            if( addStudentToClassRq.getUser() == null ||
+                addStudentToClassRq.getUser().getEmail() == null ||
+                addStudentToClassRq.getUser().getFullName() == null ||
+                addStudentToClassRq.getUser().getDob() == null) {
+                throw new AppException("User information is required to create a new student");
+            }
+            // Them user vao he thong
+            user = userService.createUser(User.builder()
+                            .dob(addStudentToClassRq.getUser().getDob())
+                            .email(addStudentToClassRq.getUser().getEmail())
+                            .fullName(addStudentToClassRq.getUser().getFullName())
+                            .status(USER_STATUS.OK)
+                            .isActive(true)
+                            .role(USER_ROLE.STUDENT)
+                    .build());
+        }else{
+            // Kiểm tra xem user đã tồn tại trong hệ thống chưa
+            StudentCheckDto checkResult = checkStudentBeforeAddingToClass(addStudentToClassRq.getUser().getEmail(), addStudentToClassRq.getClassId());
+            if (!checkResult.isExists() || !checkResult.isCanEnroll()) {
+                throw new AppException(checkResult.getReason());
+            }
+            user = checkResult.getUser();
+        }
+        Clazz clazz = getClassById(addStudentToClassRq.getClassId());
+        ClassEnrollment classEnrollment = ClassEnrollment.builder()
+                .clazz(clazz)
+                .attendee(user)
+                .isPaid(addStudentToClassRq.getIsPaid())
+                .tuitionFee(clazz.getCourse().getFee())
+                .paidAmount(clazz.getCourse().getFee() * (addStudentToClassRq.getIsPaid() ? 1 : 0)) // Nếu đã thanh toán thì số tiền đã thanh toán = học phí
+                .enrolledAt(LocalDateTime.now())
+                .build();
+
+        return classEnrollmentRepository.save(classEnrollment);
+    }
+
+
 }

@@ -38,10 +38,12 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     FROM User u
     WHERE u.role = 'TEACHER'
       AND u.status = 'OK'
+      AND u.isActive = true
       AND u.id NOT IN (
           SELECT s.teacher.id
           FROM ClassSession s
           WHERE s.date = :date
+            AND s.teacher.id IS NOT NULL
             AND s.startTime < :endTime
             AND s.endTime > :startTime
             AND s.id <> :currentSessionId

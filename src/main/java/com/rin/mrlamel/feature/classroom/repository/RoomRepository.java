@@ -26,6 +26,7 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
             SELECT s.room.id
             FROM ClassSession s
             WHERE s.date = :date
+              AND s.room.id IS NOT NULL
               AND s.startTime < :endTime
               AND s.endTime > :startTime
               AND s.id <> :sessionId

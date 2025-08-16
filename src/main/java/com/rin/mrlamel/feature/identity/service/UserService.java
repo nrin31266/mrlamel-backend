@@ -15,8 +15,9 @@ public interface UserService {
     ,String role, String status);
 
     void createUser(CreateUserRq createUserRq) throws MessagingException;
+    User createUser(User user);
     void updateUser(String userId, UpdateUserReq updateUserRq);
-    User getUserById(String userId);
+    User getUserById(Long userId);
     List<User> getAvailableTeachersForSessions(List<ClassSession> sessions);
     boolean isTeacherAvailableForAllSessions(Long teacherId, List<ClassSession> sessions);
     List<User> getAllTeachers();
@@ -24,4 +25,8 @@ public interface UserService {
             Long teacherId,
             List<ClassSession> classSessions
     );
+
+    User getUserByEmail(String email);
+
+
 }

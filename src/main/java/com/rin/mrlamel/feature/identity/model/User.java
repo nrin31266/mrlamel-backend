@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.rin.mrlamel.common.constant.GENDER;
 import com.rin.mrlamel.common.constant.USER_ROLE;
 import com.rin.mrlamel.common.constant.USER_STATUS;
+import com.rin.mrlamel.feature.classroom.model.ClassEnrollment;
 import com.rin.mrlamel.feature.classroom.model.ClassSchedule;
 import com.rin.mrlamel.feature.classroom.model.ClassSession;
 import com.rin.mrlamel.feature.classroom.model.Clazz;
@@ -73,6 +74,10 @@ public class User {
     @JsonIgnore
     @OneToMany(mappedBy = "teacher", orphanRemoval = true, cascade = CascadeType.ALL)
     List<ClassSession> teacherClassSessions;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "attendee", orphanRemoval = true, cascade = CascadeType.ALL)
+    List<ClassEnrollment> classEnrollments; // List of class enrollments for the user
 
     @JsonIgnore
     @OneToMany(mappedBy = "createdBy", orphanRemoval = true)

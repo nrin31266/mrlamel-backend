@@ -65,7 +65,7 @@ public class UserController {
     }
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{userId}")
-    public ApiRes<User> getUserById(@PathVariable String userId) {
+    public ApiRes<User> getUserById(@PathVariable Long userId) {
         return ApiRes.success(
                 userService.getUserById(userId)
         );

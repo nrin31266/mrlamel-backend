@@ -72,6 +72,10 @@ public class Clazz {
     @OneToMany(mappedBy = "clazz", orphanRemoval = true, cascade = CascadeType.ALL)
     private List<ClassSession> sessions; // Danh sách các buổi học của lớp
 
+    @JsonIgnore
+    @OneToMany(mappedBy = "clazz", orphanRemoval = true, cascade = CascadeType.ALL)
+    private List<ClassEnrollment> enrollments; // Danh sách học viên đã đăng ký lớp này
+
     @ManyToOne
     @JoinColumn(name = "course_id", nullable = false)
     private Course course; // Khóa học mà lớp này thuộc về
@@ -80,4 +84,6 @@ public class Clazz {
     @ManyToOne
     @JoinColumn(name = "create_by_id", nullable = false)
     private User createdBy; // Người tạo lớp học, có thể là giáo viên hoặc quản trị viên
+
+
 }

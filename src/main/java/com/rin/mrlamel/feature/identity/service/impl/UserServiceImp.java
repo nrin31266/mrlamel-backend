@@ -39,6 +39,7 @@ public class UserServiceImp implements com.rin.mrlamel.feature.identity.service.
     OtpProvider otpProvider;
     PasswordEncoder passwordEncoder;
 
+
     @Override
     public PageableDto<User> getAllUsers(int page, int size, String sortBy, String sortDirection, String search, String role, String status) {
         Specification<User> spec = (root, query, criteriaBuilder) -> {
@@ -97,6 +98,14 @@ public class UserServiceImp implements com.rin.mrlamel.feature.identity.service.
     }
 
     @Override
+    public User createUser(User user) {
+        if (userRepository.existsByEmail(user.getEmail())) {
+            throw new RuntimeException("User with email " + user.getEmail() + " already exists");
+        }
+        return userRepository.save(user);
+    }
+
+    @Override
     public void updateUser(String userId, UpdateUserReq updateUserRq) {
         User user = userRepository.findById(Long.valueOf(userId))
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
@@ -114,8 +123,8 @@ public class UserServiceImp implements com.rin.mrlamel.feature.identity.service.
     }
 
     @Override
-    public User getUserById(String userId) {
-        return userRepository.findById(Long.valueOf(userId))
+    public User getUserById(Long userId) {
+        return userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
     }
 
@@ -188,5 +197,13 @@ public class UserServiceImp implements com.rin.mrlamel.feature.identity.service.
         // Lưu tất cả session đã cập nhật
         userRepository.save(teacher);
     }
+
+    @Override
+    public User getUserByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+    }
+
+
 
 }
