@@ -1,6 +1,7 @@
 package com.rin.mrlamel.feature.identity.service.impl;
 
 import com.rin.mrlamel.common.dto.PageableDto;
+import com.rin.mrlamel.common.exception.AppException;
 import com.rin.mrlamel.common.mapper.PageableMapper;
 import com.rin.mrlamel.common.utils.OtpProvider;
 import com.rin.mrlamel.feature.classroom.model.ClassSession;
@@ -24,6 +25,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Slf4j
@@ -187,9 +189,13 @@ public class UserServiceImp implements com.rin.mrlamel.feature.identity.service.
         if (!isTeacherAvailableForAllSessions(teacherId, classSessions)) {
             throw new IllegalArgumentException("Teacher with ID " + teacherId + " is not available for all provided sessions.");
         }
-
+        LocalDateTime now = LocalDateTime.now();
         // Gán giáo viên cho từng session
         for (ClassSession session : classSessions) {
+            if(session.getDate().isBefore(now.toLocalDate()) ||
+               (session.getDate().isEqual(now.toLocalDate()) && session.getStartTime().isBefore(now.toLocalTime()))) {
+                continue; // Bỏ qua các session đã qua
+            }
             session.setTeacher(teacher);
         }
 
@@ -200,8 +206,7 @@ public class UserServiceImp implements com.rin.mrlamel.feature.identity.service.
 
     @Override
     public User getUserByEmail(String email) {
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+        return userRepository.findByEmail(email).orElse(null);
     }
 
 

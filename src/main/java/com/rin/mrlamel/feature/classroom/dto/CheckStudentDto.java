@@ -9,7 +9,7 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class StudentCheckDto {
+public class CheckStudentDto {
     private boolean exists;       // user có tồn tại trong hệ thống không
     private boolean canEnroll;    // có thể thêm vào lớp hay không
     private String reason;        // lý do không thể enroll (role/status)

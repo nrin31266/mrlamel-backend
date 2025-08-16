@@ -15,6 +15,7 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Slf4j
@@ -156,9 +157,13 @@ public class RoomServiceImpl implements RoomService {
         if (!isRoomAvailableForAllSessions(roomId, classSessions)) {
             throw new IllegalArgumentException("Room with ID " + roomId + " is not available for all provided sessions.");
         }
-
+        LocalDateTime now = LocalDateTime.now();
         // Gán phòng cho từng session
         for (ClassSession session : classSessions) {
+            if(session.getDate().isBefore(now.toLocalDate()) ||
+               (session.getDate().isEqual(now.toLocalDate()) && session.getStartTime().isBefore(now.toLocalTime()))) {
+                continue;
+            }
             session.setRoom(room);
         }
 

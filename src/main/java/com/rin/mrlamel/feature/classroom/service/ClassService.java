@@ -6,7 +6,7 @@ import com.rin.mrlamel.feature.classroom.model.ClassEnrollment;
 import com.rin.mrlamel.feature.classroom.model.ClassSchedule;
 import com.rin.mrlamel.feature.classroom.model.ClassSession;
 import com.rin.mrlamel.feature.classroom.model.Clazz;
-import com.rin.mrlamel.feature.classroom.dto.StudentCheckDto;
+import com.rin.mrlamel.feature.classroom.dto.CheckStudentDto;
 import org.springframework.security.core.Authentication;
 
 import java.util.List;
@@ -36,8 +36,9 @@ public interface ClassService {
     void assignTeacherToSchedules(Long teacherId, List<ClassSchedule> classSchedules);
     ClassSchedule getClassScheduleById(Long classScheduleId);
 
-    StudentCheckDto checkStudentBeforeAddingToClass(String studentEmail, Long classId);
+    CheckStudentDto checkStudentBeforeAddingToClass(String studentEmail, Long classId);
 
     ClassEnrollment addStudentToClass(AddStudentToClassRq addStudentToClassRq);
+    List<ClassEnrollment> getClassEnrollmentsByClassId(Long classId);
 
 }

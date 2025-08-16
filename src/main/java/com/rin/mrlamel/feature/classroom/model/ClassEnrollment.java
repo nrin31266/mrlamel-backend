@@ -1,5 +1,6 @@
 package com.rin.mrlamel.feature.classroom.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.rin.mrlamel.feature.identity.model.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -20,6 +21,7 @@ public class ClassEnrollment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @EqualsAndHashCode.Include
     Long id;
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "class_id")
     Clazz clazz; // Lớp học mà học viên đăng ký

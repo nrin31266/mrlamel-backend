@@ -8,7 +8,7 @@ import com.rin.mrlamel.common.dto.PageableDto;
 import com.rin.mrlamel.common.exception.AppException;
 import com.rin.mrlamel.common.mapper.PageableMapper;
 import com.rin.mrlamel.common.utils.HolidayService;
-import com.rin.mrlamel.feature.classroom.dto.StudentCheckDto;
+import com.rin.mrlamel.feature.classroom.dto.CheckStudentDto;
 import com.rin.mrlamel.feature.classroom.dto.req.*;
 import com.rin.mrlamel.feature.classroom.mapper.ClassMapper;
 import com.rin.mrlamel.feature.classroom.model.ClassEnrollment;
@@ -285,7 +285,7 @@ public class ClassServiceImpl implements ClassService {
     }
 
     @Override
-    public StudentCheckDto checkStudentBeforeAddingToClass(String studentEmail, Long classId) {
+    public CheckStudentDto checkStudentBeforeAddingToClass(String studentEmail, Long classId) {
         boolean exists;       // user có tồn tại trong hệ thống không
         boolean canEnroll;    // có thể thêm vào lớp hay không
         String reason;        // lý do không thể enroll (role/status)
@@ -316,13 +316,14 @@ public class ClassServiceImpl implements ClassService {
                 reason = "Class is not in a valid state for enrollment: " + clazz.getStatus();
             } else {
                 List<Clazz> classesConflict = clazzRepository.findClassesWithFutureSessionConflict(clazz.getId(), user.getId());
+                log.info("Checking conflicts for user {} in class {}: found {} conflicts", user.getEmail(), clazz.getName(), classesConflict.size());
                 if (!classesConflict.isEmpty()) {
                     exists = true;
                     canEnroll = false;
                     reason = "User has future class sessions that conflict with this class: " + classesConflict.stream()
                             .map(Clazz::getName)
                             .reduce((a, b) -> a + ", " + b)
-                            .orElse("Unknown classes") + ". Total conflict( " + classesConflict.size() + " )"
+                            .orElse("Unknown classes") + ". Total conflict: " + classesConflict.size() + ""
                              + ". Please check the schedule of the user";
                 } else {
                     exists = true;
@@ -336,7 +337,7 @@ public class ClassServiceImpl implements ClassService {
             reason = "Student not found with email: " + studentEmail;
             canEnroll = false;
         }
-        return StudentCheckDto.builder()
+        return CheckStudentDto.builder()
                 .exists(exists)
                 .user(user)
                 .canEnroll(canEnroll)
@@ -347,25 +348,22 @@ public class ClassServiceImpl implements ClassService {
     @Override
     public ClassEnrollment addStudentToClass(AddStudentToClassRq addStudentToClassRq) {
         User user;
-        if(addStudentToClassRq.getClassId() == null) {
-            if( addStudentToClassRq.getUser() == null ||
-                addStudentToClassRq.getUser().getEmail() == null ||
-                addStudentToClassRq.getUser().getFullName() == null ||
-                addStudentToClassRq.getUser().getDob() == null) {
+        if(addStudentToClassRq.getUserId() == null) {
+            if(addStudentToClassRq.getEmail() == null ||
+                addStudentToClassRq.getFullName() == null) {
                 throw new AppException("User information is required to create a new student");
             }
             // Them user vao he thong
             user = userService.createUser(User.builder()
-                            .dob(addStudentToClassRq.getUser().getDob())
-                            .email(addStudentToClassRq.getUser().getEmail())
-                            .fullName(addStudentToClassRq.getUser().getFullName())
+                            .email(addStudentToClassRq.getEmail())
+                            .fullName(addStudentToClassRq.getFullName())
                             .status(USER_STATUS.OK)
                             .isActive(true)
                             .role(USER_ROLE.STUDENT)
                     .build());
         }else{
             // Kiểm tra xem user đã tồn tại trong hệ thống chưa
-            StudentCheckDto checkResult = checkStudentBeforeAddingToClass(addStudentToClassRq.getUser().getEmail(), addStudentToClassRq.getClassId());
+            CheckStudentDto checkResult = checkStudentBeforeAddingToClass(addStudentToClassRq.getEmail(), addStudentToClassRq.getClassId());
             if (!checkResult.isExists() || !checkResult.isCanEnroll()) {
                 throw new AppException(checkResult.getReason());
             }
@@ -382,6 +380,12 @@ public class ClassServiceImpl implements ClassService {
                 .build();
 
         return classEnrollmentRepository.save(classEnrollment);
+    }
+
+    @Override
+    public List<ClassEnrollment> getClassEnrollmentsByClassId(Long classId) {
+        Clazz clazz = getClassById(classId);
+        return classEnrollmentRepository.findByClazzId(clazz.getId());
     }
 
 

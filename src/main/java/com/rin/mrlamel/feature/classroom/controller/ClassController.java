@@ -1,12 +1,14 @@
 package com.rin.mrlamel.feature.classroom.controller;
 
 import com.rin.mrlamel.common.dto.response.ApiRes;
+import com.rin.mrlamel.feature.classroom.dto.CheckStudentDto;
 import com.rin.mrlamel.feature.classroom.dto.req.*;
 import com.rin.mrlamel.feature.classroom.model.ClassEnrollment;
 import com.rin.mrlamel.feature.classroom.model.ClassSchedule;
 import com.rin.mrlamel.feature.classroom.model.ClassSession;
 import com.rin.mrlamel.feature.classroom.model.Clazz;
 import com.rin.mrlamel.feature.classroom.service.ClassService;
+import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -38,7 +40,7 @@ public class ClassController {
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "asc") String sortDirection,
+            @RequestParam(defaultValue = "desc") String sortDirection,
             @RequestParam(required = false) String status
     ) {
         log.info("Fetching all classes with pagination and sorting");
@@ -92,7 +94,7 @@ public class ClassController {
     }
 
     @GetMapping("/{clazzId}/users/check")
-    public ApiRes<?> checkStudentBeforeAddingToClass(
+    public ApiRes<CheckStudentDto> checkStudentBeforeAddingToClass(
             @RequestParam String studentEmail,
             @PathVariable Long clazzId
     ) {
@@ -102,10 +104,17 @@ public class ClassController {
 
     @PostMapping("/{clazzId}/users")
     public ApiRes<ClassEnrollment> addStudentToClass(
-            @PathVariable Long clazzId,
-            @RequestBody AddStudentToClassRq addStudentToClassRq
+            @RequestBody @Valid AddStudentToClassRq addStudentToClassRq,
+            @PathVariable Long clazzId
+
     ) {
         log.info("Adding student to class with ID: {}", clazzId);
         return ApiRes.success(classService.addStudentToClass(addStudentToClassRq));
+    }
+    @GetMapping("/{classId}/enrollments")
+    public ApiRes<List<ClassEnrollment>> getClassEnrollmentsByClassId(@PathVariable Long classId) {
+        log.info("Fetching class enrollments for class ID: {}", classId);
+        List<ClassEnrollment> enrollments = classService.getClassEnrollmentsByClassId(classId);
+        return ApiRes.success(enrollments);
     }
 }
