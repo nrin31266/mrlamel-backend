@@ -1,11 +1,11 @@
 package com.rin.mrlamel.feature.classroom.repository;
 
 import com.rin.mrlamel.feature.classroom.model.ClassSession;
-import com.rin.mrlamel.feature.classroom.model.Clazz;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public interface ClassSessionRepository extends JpaRepository<ClassSession, Long> {
@@ -21,4 +21,25 @@ public interface ClassSessionRepository extends JpaRepository<ClassSession, Long
     List<ClassSession> findByBaseScheduleId(Long classScheduleId);
 
 
+    @Query("""
+            SELECT cs FROM ClassSession cs
+            WHERE cs.teacher.id = :teacherId
+            AND cs.date = :date
+            ORDER BY cs.startTime ASC
+            """)
+    List<ClassSession> findTimeTableForTeacherByDay(
+            @Param("teacherId") Long teacherId,
+            @Param("date") LocalDate date
+    );
+    @Query("""
+            SELECT cs FROM ClassSession cs
+            WHERE cs.teacher.id = :teacherId
+            AND cs.date BETWEEN :startOfWeek AND :endOfWeek
+            ORDER BY cs.date ASC, cs.startTime ASC
+            """)
+    List<ClassSession> findTimeTableForTeacherByWeek(
+            Long teacherId,
+            LocalDate startOfWeek,
+            LocalDate endOfWeek
+    );
 }

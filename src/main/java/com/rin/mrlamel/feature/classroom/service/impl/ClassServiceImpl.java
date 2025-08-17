@@ -6,6 +6,8 @@ import com.rin.mrlamel.common.exception.AppException;
 import com.rin.mrlamel.common.mapper.PageableMapper;
 import com.rin.mrlamel.common.utils.HolidayService;
 import com.rin.mrlamel.feature.classroom.dto.CheckStudentDto;
+import com.rin.mrlamel.feature.classroom.dto.SessionDto;
+import com.rin.mrlamel.feature.classroom.dto.TimeTableForTeacherByWeekDto;
 import com.rin.mrlamel.feature.classroom.dto.req.*;
 import com.rin.mrlamel.feature.classroom.mapper.ClassMapper;
 import com.rin.mrlamel.feature.classroom.model.*;
@@ -427,7 +429,34 @@ public class ClassServiceImpl implements ClassService {
         return classEnrollmentRepository.findByClazzId(clazz.getId());
     }
 
+    @Override
+    public List<SessionDto> getTimeTableForTeacherByDay(Long teacherId, LocalDate date) {
+        return classSessionRepository.findTimeTableForTeacherByDay(teacherId, date)
+                .stream()
+                .map(classMapper::toSessionDto)
+                .toList();
+    }
 
+    @Override
+    public TimeTableForTeacherByWeekDto getTimeTableForTeacherByWeek(Long teacherId, int weekNumber) {
+
+        LocalDate now = LocalDate.now();
+        // 0 is the current week, 1 is next week, etc.
+        LocalDate startOfWeek = now.with(DayOfWeek.MONDAY).plusWeeks(weekNumber);
+        LocalDate endOfWeek = startOfWeek.plusDays(6);
+
+        return TimeTableForTeacherByWeekDto.builder()
+                .weekStartDate(startOfWeek)
+                .weekEndDate(endOfWeek)
+                .weekNumber(weekNumber)
+                .sessions(
+                        classSessionRepository.findTimeTableForTeacherByWeek(teacherId, startOfWeek, endOfWeek)
+                                .stream()
+                                .map(classMapper::toSessionDto)
+                                .toList()
+                )
+                .build();
+    }
 
 
 }

@@ -25,7 +25,7 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 @PreAuthorize("hasRole('ADMIN')")
-public class ClassController {
+public class AminClassController {
     ClassService classService;
 
     @PostMapping
