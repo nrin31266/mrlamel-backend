@@ -1,5 +1,6 @@
 package com.rin.mrlamel.feature.classroom.repository;
 
+import com.rin.mrlamel.common.constant.CLASS_STATUS;
 import com.rin.mrlamel.feature.classroom.model.ClassSession;
 import com.rin.mrlamel.feature.classroom.model.Clazz;
 import com.rin.mrlamel.feature.classroom.model.Room;
@@ -47,26 +48,45 @@ public interface ClazzRepository extends JpaRepository<Clazz, Long>, JpaSpecific
             @Param("clazzId") Long clazzId,
             @Param("attendeeId") Long attendeeId
     );
-//    @Query("""
-//        SELECT r
-//        FROM Room r
-//        WHERE r.id NOT IN (
-//            SELECT s.room.id
-//            FROM ClassSession s
-//            WHERE s.date = :date
-//              AND s.room.id IS NOT NULL
-//              AND s.startTime < :endTime
-//              AND s.endTime > :startTime
-//              AND s.id <> :sessionId
-//              AND (s.date > CURRENT_DATE OR (s.date = CURRENT_DATE AND s.startTime >= CURRENT_TIME))
-//        )
-//    """)
-//    List<Room> getAvailableRoomForSession(
-//            @Param("date") LocalDate date,
-//            @Param("startTime") LocalTime startTime,
-//            @Param("endTime") LocalTime endTime,
-//            @Param("sessionId") Long sessionId // session hiện tại để bỏ qua
-//    );
-//    SELECT DISTINCT c → tránh lặp class nếu có nhiều session trùng trong cùng một lớp.
+
+
+    @Query("""
+        SELECT c 
+        FROM Clazz c
+        WHERE c.status = 'READY'
+          AND c.startDate <= :date
+          AND (c.endDate IS NULL OR c.endDate >= :date)
+    """)
+    List<Clazz> findClassesReadyToStart(@Param("date") LocalDate date);
+
+
+//    Nếu endDate IS NULL → mình lấy MAX(s.date) (ngày cuối của session).
+//
+//    Nếu MAX(s.date) < :dateMinusOne nghĩa là hiện tại đã qua luôn cả last session + 1 ngày → class coi như kết thúc.
+    @Query("""
+    SELECT c
+    FROM Clazz c
+    WHERE (c.status = 'ONGOING' OR c.status = 'READY')
+      AND (
+        (c.endDate IS NOT NULL AND c.endDate < :date)
+        OR
+        (
+          c.endDate IS NULL
+          AND EXISTS (
+            SELECT 1
+            FROM ClassSession s
+            WHERE s.clazz = c
+            GROUP BY s.clazz
+            HAVING MAX(s.date) < :dateMinusOne
+          )
+        )
+      )
+""")
+    List<Clazz> findAllOngoingClassesEndedBefore(
+            @Param("date") LocalDate date,
+            @Param("dateMinusOne") LocalDate dateMinusOne
+    );
+
+
 
 }

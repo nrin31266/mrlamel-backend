@@ -1,9 +1,6 @@
 package com.rin.mrlamel.feature.classroom.service.impl;
 
-import com.rin.mrlamel.common.constant.CLASS_SECTION_STATUS;
-import com.rin.mrlamel.common.constant.CLASS_STATUS;
-import com.rin.mrlamel.common.constant.USER_ROLE;
-import com.rin.mrlamel.common.constant.USER_STATUS;
+import com.rin.mrlamel.common.constant.*;
 import com.rin.mrlamel.common.dto.PageableDto;
 import com.rin.mrlamel.common.exception.AppException;
 import com.rin.mrlamel.common.mapper.PageableMapper;
@@ -11,10 +8,7 @@ import com.rin.mrlamel.common.utils.HolidayService;
 import com.rin.mrlamel.feature.classroom.dto.CheckStudentDto;
 import com.rin.mrlamel.feature.classroom.dto.req.*;
 import com.rin.mrlamel.feature.classroom.mapper.ClassMapper;
-import com.rin.mrlamel.feature.classroom.model.ClassEnrollment;
-import com.rin.mrlamel.feature.classroom.model.ClassSchedule;
-import com.rin.mrlamel.feature.classroom.model.ClassSession;
-import com.rin.mrlamel.feature.classroom.model.Clazz;
+import com.rin.mrlamel.feature.classroom.model.*;
 import com.rin.mrlamel.feature.classroom.repository.*;
 import com.rin.mrlamel.feature.identity.model.User;
 import com.rin.mrlamel.feature.identity.service.AuthenticationService;
@@ -32,6 +26,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -54,6 +49,7 @@ public class ClassServiceImpl implements ClassService {
     ClassSessionRepository classSessionRepository;
     HolidayService holidayService;
     ClassEnrollmentRepository classEnrollmentRepository;
+    private final AttendanceRepository attendanceRepository;
 
     @Override
     public Clazz createClass(CreateClassRequest createClassReq, Authentication authentication) {
@@ -220,8 +216,8 @@ public class ClassServiceImpl implements ClassService {
             currentDate = currentDate.plusDays(1); // Sang ngày tiếp theo
 
         }
-
-        clazz.setStatus(CLASS_STATUS.READY);
+        LocalDate now = LocalDate.now();
+        clazz.setStatus(markClassOnReadyRq.getStartDate().isAfter(now) ? CLASS_STATUS.READY : CLASS_STATUS.ONGOING);
         clazz.setStartDate(markClassOnReadyRq.getStartDate());
         clazz.setEndDate(sessions.getLast().getDate().plusDays(1)); // Ngày kết thúc dự kiến là ngày sau buổi cuối cùng
         clazz.getSessions().clear(); // Xoá session cũ
@@ -344,42 +340,85 @@ public class ClassServiceImpl implements ClassService {
                 .reason(reason)
                 .build();
     }
-
     @Override
+    @Transactional
     public ClassEnrollment addStudentToClass(AddStudentToClassRq addStudentToClassRq) {
         User user;
-        if(addStudentToClassRq.getUserId() == null) {
-            if(addStudentToClassRq.getEmail() == null ||
+        if (addStudentToClassRq.getUserId() == null) {
+            if (addStudentToClassRq.getEmail() == null ||
                 addStudentToClassRq.getFullName() == null) {
                 throw new AppException("User information is required to create a new student");
             }
-            // Them user vao he thong
+            // Thêm user vào hệ thống
             user = userService.createUser(User.builder()
-                            .email(addStudentToClassRq.getEmail())
-                            .fullName(addStudentToClassRq.getFullName())
-                            .status(USER_STATUS.OK)
-                            .isActive(true)
-                            .role(USER_ROLE.STUDENT)
+                    .email(addStudentToClassRq.getEmail())
+                    .fullName(addStudentToClassRq.getFullName())
+                    .status(USER_STATUS.OK)
+                    .isActive(true)
+                    .role(USER_ROLE.STUDENT)
                     .build());
-        }else{
-            // Kiểm tra xem user đã tồn tại trong hệ thống chưa
-            CheckStudentDto checkResult = checkStudentBeforeAddingToClass(addStudentToClassRq.getEmail(), addStudentToClassRq.getClassId());
+        } else {
+            // Kiểm tra user trước khi thêm vào lớp
+            CheckStudentDto checkResult = checkStudentBeforeAddingToClass(
+                    addStudentToClassRq.getEmail(),
+                    addStudentToClassRq.getClassId()
+            );
             if (!checkResult.isExists() || !checkResult.isCanEnroll()) {
                 throw new AppException(checkResult.getReason());
             }
             user = checkResult.getUser();
         }
+
         Clazz clazz = getClassById(addStudentToClassRq.getClassId());
+
+        // Tạo enrollment
         ClassEnrollment classEnrollment = ClassEnrollment.builder()
                 .clazz(clazz)
                 .attendee(user)
                 .isPaid(addStudentToClassRq.getIsPaid())
                 .tuitionFee(clazz.getCourse().getFee())
-                .paidAmount(clazz.getCourse().getFee() * (addStudentToClassRq.getIsPaid() ? 1 : 0)) // Nếu đã thanh toán thì số tiền đã thanh toán = học phí
+                .paidAmount(clazz.getCourse().getFee() * (addStudentToClassRq.getIsPaid() ? 1 : 0))
                 .enrolledAt(LocalDateTime.now())
                 .build();
 
-        return classEnrollmentRepository.save(classEnrollment);
+        // Save enrollment trước để có ID
+        classEnrollmentRepository.save(classEnrollment);
+
+        // Tạo attendances
+        List<Attendance> attendances = new ArrayList<>();
+        LocalDate today = LocalDate.now();
+        for (ClassSession session : clazz.getSessions()) {
+            ATTENDANCE_STATUS status;
+            if (session.getDate().isBefore(today)) {
+                status = ATTENDANCE_STATUS.NOT_JOINED_YET;
+            } else {
+                status = ATTENDANCE_STATUS.PRESENT;
+            }
+
+            attendances.add(
+                    Attendance.builder()
+                            .session(session)
+                            .attendanceEnrollment(classEnrollment) // <-- nên dùng quan hệ qua enrollment
+                            .status(status)
+                            .build()
+            );
+        }
+
+        // Save attendances
+        attendanceRepository.saveAll(attendances);
+
+        return classEnrollment;
+    }
+
+    @Override
+    public void removeStudentFromClass(Long classId, Long studentId) {
+        Clazz clazz = getClassById(classId);
+        ClassEnrollment classEnrollment = classEnrollmentRepository.findByClazzIdAndAttendeeId(clazz.getId(), studentId)
+                .orElseThrow(() -> new AppException("Student not found in this class"));
+
+
+        // Xoá enrollment, sẽ tự động xoá các attendance liên quan do orphanRemoval
+        classEnrollmentRepository.delete(classEnrollment);
     }
 
     @Override
@@ -387,6 +426,8 @@ public class ClassServiceImpl implements ClassService {
         Clazz clazz = getClassById(classId);
         return classEnrollmentRepository.findByClazzId(clazz.getId());
     }
+
+
 
 
 }

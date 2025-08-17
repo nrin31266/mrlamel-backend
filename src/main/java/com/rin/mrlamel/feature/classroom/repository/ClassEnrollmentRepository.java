@@ -4,6 +4,7 @@ import com.rin.mrlamel.feature.classroom.model.ClassEnrollment;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ClassEnrollmentRepository extends JpaRepository<ClassEnrollment, Long> {
 
@@ -12,4 +13,5 @@ public interface ClassEnrollmentRepository extends JpaRepository<ClassEnrollment
 
     boolean existsByClazzIdAndAttendeeId(Long clazzId, Long attendeeId);
     List<ClassEnrollment> findByClazzId(Long clazzId);
+    Optional<ClassEnrollment> findByClazzIdAndAttendeeId(Long clazzId, Long attendeeId);
 }

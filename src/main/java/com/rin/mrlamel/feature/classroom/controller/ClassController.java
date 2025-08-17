@@ -117,4 +117,10 @@ public class ClassController {
         List<ClassEnrollment> enrollments = classService.getClassEnrollmentsByClassId(classId);
         return ApiRes.success(enrollments);
     }
+    @DeleteMapping("/{classId}/users/{studentId}")
+    public ApiRes<Void> removeStudentFromClass(@PathVariable Long classId, @PathVariable Long studentId) {
+        log.info("Removing student with ID: {} from class with ID: {}", studentId, classId);
+        classService.removeStudentFromClass(classId, studentId);
+        return ApiRes.success(null);
+    }
 }

@@ -10,6 +10,7 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -58,4 +59,8 @@ public class ClassSession {
 
     @CreationTimestamp
     private LocalDate createdAt;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "session", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Attendance> attendances; // Danh sách điểm danh của học viên trong buổi học này
 }

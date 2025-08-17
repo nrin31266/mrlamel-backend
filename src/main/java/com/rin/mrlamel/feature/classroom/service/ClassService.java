@@ -21,24 +21,20 @@ public interface ClassService {
             String status
     );
     Clazz getClassById(Long classId);
-
     ClassSchedule createClassSchedule(CreateClassScheduleReq createClassScheduleReq);
     ClassSchedule updateClassSchedule(Long classScheduleId, UpdateClassScheduleReq createClassScheduleReq);
-
     void deleteClassSchedule(Long classScheduleId);
-
     Clazz markClassOnReady(Long clazzId, MarkClassOnReadyRq markClassOnReadyRq);
-
     List<ClassSession> getClassSessionsByClassId(Long classId);
     List<ClassSession> getClassSessionsByClassScheduleId(Long classScheduleId);
     ClassSession getClassSessionById(Long classSessionId);
     void assignRoomToSchedules(Long roomId, List<ClassSchedule> classSchedules);
     void assignTeacherToSchedules(Long teacherId, List<ClassSchedule> classSchedules);
     ClassSchedule getClassScheduleById(Long classScheduleId);
-
     CheckStudentDto checkStudentBeforeAddingToClass(String studentEmail, Long classId);
-
     ClassEnrollment addStudentToClass(AddStudentToClassRq addStudentToClassRq);
+    void removeStudentFromClass(Long classId, Long studentId);
     List<ClassEnrollment> getClassEnrollmentsByClassId(Long classId);
+
 
 }

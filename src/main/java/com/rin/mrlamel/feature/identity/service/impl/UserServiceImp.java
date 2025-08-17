@@ -104,6 +104,8 @@ public class UserServiceImp implements com.rin.mrlamel.feature.identity.service.
         if (userRepository.existsByEmail(user.getEmail())) {
             throw new RuntimeException("User with email " + user.getEmail() + " already exists");
         }
+        String defaultPassword = "123"; // Default password, should be changed by the user later
+        user.setPassword(passwordEncoder.encode(defaultPassword)); // Encode the password
         return userRepository.save(user);
     }
 
