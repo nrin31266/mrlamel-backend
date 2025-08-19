@@ -194,10 +194,10 @@ public class UserServiceImp implements com.rin.mrlamel.feature.identity.service.
         LocalDateTime now = LocalDateTime.now();
         // Gán giáo viên cho từng session
         for (ClassSession session : classSessions) {
-            if(session.getDate().isBefore(now.toLocalDate()) ||
-               (session.getDate().isEqual(now.toLocalDate()) && session.getStartTime().isBefore(now.toLocalTime()))) {
-                continue; // Bỏ qua các session đã qua
-            }
+//            if(session.getDate().isBefore(now.toLocalDate()) ||
+//               (session.getDate().isEqual(now.toLocalDate()) && session.getStartTime().isBefore(now.toLocalTime()))) {
+//                continue; // Bỏ qua các session đã qua
+//            }
             session.setTeacher(teacher);
         }
 

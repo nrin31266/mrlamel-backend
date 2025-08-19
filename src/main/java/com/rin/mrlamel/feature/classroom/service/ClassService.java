@@ -3,12 +3,14 @@ package com.rin.mrlamel.feature.classroom.service;
 import com.rin.mrlamel.common.dto.PageableDto;
 import com.rin.mrlamel.feature.classroom.dto.SessionDto;
 import com.rin.mrlamel.feature.classroom.dto.TimeTableForTeacherByWeekDto;
+import com.rin.mrlamel.feature.classroom.dto.TimeTableSessionDto;
 import com.rin.mrlamel.feature.classroom.dto.req.*;
 import com.rin.mrlamel.feature.classroom.model.ClassEnrollment;
 import com.rin.mrlamel.feature.classroom.model.ClassSchedule;
 import com.rin.mrlamel.feature.classroom.model.ClassSession;
 import com.rin.mrlamel.feature.classroom.model.Clazz;
 import com.rin.mrlamel.feature.classroom.dto.CheckStudentDto;
+import com.rin.mrlamel.feature.identity.model.User;
 import org.springframework.security.core.Authentication;
 
 import java.time.LocalDate;
@@ -31,16 +33,18 @@ public interface ClassService {
     List<ClassSession> getClassSessionsByClassId(Long classId);
     List<ClassSession> getClassSessionsByClassScheduleId(Long classScheduleId);
     ClassSession getClassSessionById(Long classSessionId);
-    void assignRoomToSchedules(Long roomId, List<ClassSchedule> classSchedules);
-    void assignTeacherToSchedules(Long teacherId, List<ClassSchedule> classSchedules);
+
+
     ClassSchedule getClassScheduleById(Long classScheduleId);
     CheckStudentDto checkStudentBeforeAddingToClass(String studentEmail, Long classId);
     ClassEnrollment addStudentToClass(AddStudentToClassRq addStudentToClassRq);
     void removeStudentFromClass(Long classId, Long studentId);
     List<ClassEnrollment> getClassEnrollmentsByClassId(Long classId);
 
-    List<SessionDto> getTimeTableForTeacherByDay(Long teacherId, LocalDate date);
+    List<TimeTableSessionDto> getTimeTableForTeacherByDay(Long teacherId, LocalDate date);
     TimeTableForTeacherByWeekDto getTimeTableForTeacherByWeek(Long teacherId, int weekNumber);
+    User empowerClassForTeacher(Long classId, String email);
+    void revokeEmpowermentFromClass(Long classId, Long teacherId);
 
 
 }

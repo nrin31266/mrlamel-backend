@@ -41,13 +41,13 @@ public class ClassSchedule {
     @Column(nullable = false)
     private LocalTime  endTime;
 
-    @ManyToOne
-    @JoinColumn(name = "teacher_id")
-    private User teacher;
-
-    @ManyToOne
-    @JoinColumn(name = "room_id")
-    private Room room;
+//    @ManyToOne
+//    @JoinColumn(name = "teacher_id")
+//    private User teacher;
+//
+//    @ManyToOne
+//    @JoinColumn(name = "room_id")
+//    private Room room;
     @JsonIgnore
     @OneToMany(mappedBy = "baseSchedule", cascade = CascadeType.ALL, orphanRemoval = true)
     List<ClassSession> classSessions; // Danh sách các buổi học dựa trên lịch này

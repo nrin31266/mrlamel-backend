@@ -33,12 +33,6 @@ public class RoomAssignmentServiceImpl implements RoomAssignmentService {
         if (clazzId == null) {
             throw new IllegalArgumentException("clazzId is required for mode=by-clazz");
         }
-
-        var clazz = clazzRepository.findById(clazzId)
-                .orElseThrow(() -> new IllegalArgumentException("Class not found with id: " + clazzId));
-        classService.assignRoomToSchedules(roomId, clazz.getSchedules());
-
-
         List<ClassSession> sessions = classService.getClassSessionsByClassId(clazzId);
         roomService.assignRoomToSessions(roomId, sessions);
     }
@@ -49,11 +43,6 @@ public class RoomAssignmentServiceImpl implements RoomAssignmentService {
         if (scheduleId == null) {
             throw new IllegalArgumentException("scheduleId is required for mode=by-schedule");
         }
-
-        // Cập nhật schedule
-        var schedule = classScheduleRepository.findById(scheduleId)
-                .orElseThrow(() -> new IllegalArgumentException("Schedule not found with id: " + scheduleId));
-       classService.assignRoomToSchedules(roomId, List.of(schedule));
 
         // Cập nhật tất cả sessions của schedule đó
         List<ClassSession> sessions = classService.getClassSessionsByClassScheduleId(scheduleId);

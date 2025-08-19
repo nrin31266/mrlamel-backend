@@ -8,6 +8,7 @@ import com.rin.mrlamel.common.utils.HolidayService;
 import com.rin.mrlamel.feature.classroom.dto.CheckStudentDto;
 import com.rin.mrlamel.feature.classroom.dto.SessionDto;
 import com.rin.mrlamel.feature.classroom.dto.TimeTableForTeacherByWeekDto;
+import com.rin.mrlamel.feature.classroom.dto.TimeTableSessionDto;
 import com.rin.mrlamel.feature.classroom.dto.req.*;
 import com.rin.mrlamel.feature.classroom.mapper.ClassMapper;
 import com.rin.mrlamel.feature.classroom.model.*;
@@ -244,37 +245,9 @@ public class ClassServiceImpl implements ClassService {
                 .orElseThrow(() -> new AppException("Class session not found with ID: " + classSessionId));
     }
 
-    @Override
-    public void assignRoomToSchedules(Long roomId, List<ClassSchedule> classSchedules) {
-        if (roomId == null || classSchedules == null || classSchedules.isEmpty()) {
-            throw new AppException("Room ID and class schedules are required for assignment");
-        }
 
-        var room = roomRepository.findById(roomId)
-                .orElseThrow(() -> new AppException("Room not found with ID: " + roomId));
 
-        for (ClassSchedule schedule : classSchedules) {
-            schedule.setRoom(room);
-        }
-        classScheduleRepository.saveAll(classSchedules);
-    }
 
-    @Override
-    public void assignTeacherToSchedules(Long teacherId, List<ClassSchedule> classSchedules) {
-        if (teacherId == null || classSchedules == null || classSchedules.isEmpty()) {
-            throw new AppException("Teacher ID and class schedules are required for assignment");
-        }
-
-        var teacher = userService.getUserById(teacherId);
-        if (teacher == null) {
-            throw new AppException("Teacher not found with ID: " + teacherId);
-        }
-
-        for (ClassSchedule schedule : classSchedules) {
-            schedule.setTeacher(teacher);
-        }
-        classScheduleRepository.saveAll(classSchedules);
-    }
 
     @Override
     public ClassSchedule getClassScheduleById(Long classScheduleId) {
@@ -430,10 +403,10 @@ public class ClassServiceImpl implements ClassService {
     }
 
     @Override
-    public List<SessionDto> getTimeTableForTeacherByDay(Long teacherId, LocalDate date) {
+    public List<TimeTableSessionDto> getTimeTableForTeacherByDay(Long teacherId, LocalDate date) {
         return classSessionRepository.findTimeTableForTeacherByDay(teacherId, date)
                 .stream()
-                .map(classMapper::toSessionDto)
+                .map(classMapper::toTimeTableSessionDto)
                 .toList();
     }
 
@@ -452,10 +425,35 @@ public class ClassServiceImpl implements ClassService {
                 .sessions(
                         classSessionRepository.findTimeTableForTeacherByWeek(teacherId, startOfWeek, endOfWeek)
                                 .stream()
-                                .map(classMapper::toSessionDto)
+                                .map(classMapper::toTimeTableSessionDto)
                                 .toList()
                 )
                 .build();
+    }
+
+    @Override
+    public User empowerClassForTeacher(Long classId, String email) {
+        Clazz clazz = getClassById(classId);
+        User teacher = userService.getUserByEmail(email);
+        if (teacher == null || !teacher.getRole().equals(USER_ROLE.TEACHER)) {
+            throw new AppException("Teacher not found with email: " + email);
+        }
+        clazz.getManagers().add(teacher);
+        clazzRepository.save(clazz);
+        return teacher;
+    }
+
+    @Override
+    public void revokeEmpowermentFromClass(Long classId, Long teacherId) {
+        Clazz clazz = getClassById(classId);
+        User teacher = userService.getUserById(teacherId);
+        if (teacher == null || !teacher.getRole().equals(USER_ROLE.TEACHER)) {
+            throw new AppException("Teacher not found with ID: " + teacherId);
+        }
+        if (!clazz.getManagers().remove(teacher)) {
+            throw new AppException("Teacher is not a manager of this class");
+        }
+        clazzRepository.save(clazz);
     }
 
 

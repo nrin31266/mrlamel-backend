@@ -88,5 +88,24 @@ public interface ClazzRepository extends JpaRepository<Clazz, Long>, JpaSpecific
     );
 
 
+    @Query("""
+               SELECT c
+                FROM Clazz c
+                WHERE c.status = :status
+                  AND EXISTS (
+                    SELECT 1
+                    FROM ClassSession s
+                    WHERE s.clazz = c
+                        AND s.teacher.id = :teacherId
+                  )
+            """)
+    List<Clazz> findClassesByTeacherParticipatedByStatus(
+            @Param("teacherId") Long teacherId,
+            @Param("status") CLASS_STATUS status
+    );
+
+
+
+
 
 }

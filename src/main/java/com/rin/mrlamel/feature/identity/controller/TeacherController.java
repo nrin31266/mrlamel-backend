@@ -59,11 +59,8 @@ public class TeacherController {
         List<ClassSession> classSessions;
         if (mode.equals("by-clazz") && clazzId != null) {
             classSessions = classService.getClassSessionsByClassId(clazzId);
-            Clazz clazz = classService.getClassById(clazzId);
-            classService.assignTeacherToSchedules(teacherId, clazz.getSchedules());
         } else if (mode.equals("by-schedule") && scheduleId != null) {
-            classSessions = classService.getClassSessionsByClassScheduleId(scheduleId);
-            classService.assignTeacherToSchedules(teacherId, List.of(classService.getClassScheduleById(scheduleId)));
+            classSessions = classService.getClassSessionsByClassScheduleId(scheduleId);;
         } else if (mode.equals("by-session") && sessionId != null) {
             classSessions = List.of(classService.getClassSessionById(sessionId));
         } else {

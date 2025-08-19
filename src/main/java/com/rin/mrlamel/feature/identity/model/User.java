@@ -38,6 +38,7 @@ public class User {
     @GeneratedValue(strategy = jakarta.persistence.GenerationType.IDENTITY)
     Long id;
     @Email(message = "Invalid email format")
+    @EqualsAndHashCode.Include
     @Column(nullable = false, unique = true, length = 100)
     String email;
     @JsonIgnore
@@ -68,9 +69,9 @@ public class User {
     @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     List<RefreshToken> refreshTokens;
-    @JsonIgnore
-    @OneToMany(mappedBy = "teacher", orphanRemoval = true, cascade = CascadeType.ALL)
-    List<ClassSchedule> teacherClassSchedules;
+//    @JsonIgnore
+//    @OneToMany(mappedBy = "teacher", orphanRemoval = true, cascade = CascadeType.ALL)
+//    List<ClassSchedule> teacherClassSchedules;
     @JsonIgnore
     @OneToMany(mappedBy = "teacher", orphanRemoval = true, cascade = CascadeType.ALL)
     List<ClassSession> teacherClassSessions;
@@ -82,6 +83,10 @@ public class User {
     @JsonIgnore
     @OneToMany(mappedBy = "createdBy", orphanRemoval = true)
     List<Clazz> createdByClasses;
+
+    @JsonIgnore
+    @ManyToMany(mappedBy = "managers")
+    List<Clazz> managedClasses; // Classes managed by the user
 
     public boolean isProfileComplete() {
         return fullName != null && !fullName.isEmpty() &&

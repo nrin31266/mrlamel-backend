@@ -14,7 +14,7 @@ import java.util.List;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class TimeTableForTeacherByWeekDto {
-    List<SessionDto> sessions; // Danh sách các buổi học trong tuần
+    List<TimeTableSessionDto> sessions; // Danh sách các buổi học trong tuần
     Integer weekNumber; // Số thứ tự của tuần trong năm (0 là tuần hiện tại)
     LocalDate weekStartDate; // Ngày bắt đầu của tuần (định dạng: yyyy-MM-dd)
     LocalDate weekEndDate; // Ngày kết thúc của tuần (định dạng: yyyy-MM-dd)

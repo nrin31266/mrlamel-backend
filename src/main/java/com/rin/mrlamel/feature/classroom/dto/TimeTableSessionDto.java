@@ -15,9 +15,9 @@ import java.time.LocalTime;
 @NoArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class SessionDto {
+public class TimeTableSessionDto {
     private Long id;
-//    private ClazzDto clazz;
+    private ClazzDto clazz;
 //    private ClassSchedule baseSchedule;
     private LocalDate date; // Ngày diễn ra buổi học
     private LocalTime startTime;

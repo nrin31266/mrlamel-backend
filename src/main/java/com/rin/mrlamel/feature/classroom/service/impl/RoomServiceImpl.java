@@ -160,10 +160,10 @@ public class RoomServiceImpl implements RoomService {
         LocalDateTime now = LocalDateTime.now();
         // Gán phòng cho từng session
         for (ClassSession session : classSessions) {
-            if(session.getDate().isBefore(now.toLocalDate()) ||
-               (session.getDate().isEqual(now.toLocalDate()) && session.getStartTime().isBefore(now.toLocalTime()))) {
-                continue;
-            }
+//            if(session.getDate().isBefore(now.toLocalDate()) ||
+//               (session.getDate().isEqual(now.toLocalDate()) && session.getStartTime().isBefore(now.toLocalTime()))) {
+//                continue;
+//            }
             session.setRoom(room);
         }
 

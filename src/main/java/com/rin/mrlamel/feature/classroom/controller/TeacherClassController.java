@@ -1,20 +1,23 @@
 package com.rin.mrlamel.feature.classroom.controller;
 
 import com.rin.mrlamel.common.dto.response.ApiRes;
+import com.rin.mrlamel.common.utils.JwtTokenProvider;
 import com.rin.mrlamel.feature.classroom.dto.SessionDto;
 import com.rin.mrlamel.feature.classroom.dto.TimeTableForTeacherByWeekDto;
+import com.rin.mrlamel.feature.classroom.dto.TimeTableSessionDto;
+import com.rin.mrlamel.feature.classroom.model.Attendance;
+import com.rin.mrlamel.feature.classroom.service.AttendanceService;
 import com.rin.mrlamel.feature.classroom.service.ClassService;
+import com.rin.mrlamel.feature.identity.service.UserService;
 import lombok.AccessLevel;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.repository.query.Param;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.List;
 
 @RestController
@@ -25,8 +28,11 @@ import java.util.List;
 @PreAuthorize("hasRole('TEACHER')")
 public class TeacherClassController {
     ClassService classService;
+    AttendanceService attendanceService;
+    JwtTokenProvider jwtTokenProvider;
+    UserService userService;
     @GetMapping("/{teacherId}/time-table/day")
-    public ApiRes<List<SessionDto>> getTimeTableForTeacherByDay(
+    public ApiRes<List<TimeTableSessionDto>> getTimeTableForTeacherByDay(
             @PathVariable Long teacherId,
             @RequestParam(value = "date", required = false) LocalDate date
     ) {
@@ -43,4 +49,6 @@ public class TeacherClassController {
     ) {
         return ApiRes.success(classService.getTimeTableForTeacherByWeek(teacherId, weekNumber));
     }
+
+
 }

@@ -8,6 +8,7 @@ import com.rin.mrlamel.feature.classroom.model.ClassSchedule;
 import com.rin.mrlamel.feature.classroom.model.ClassSession;
 import com.rin.mrlamel.feature.classroom.model.Clazz;
 import com.rin.mrlamel.feature.classroom.service.ClassService;
+import com.rin.mrlamel.feature.identity.model.User;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -121,6 +122,24 @@ public class AminClassController {
     public ApiRes<Void> removeStudentFromClass(@PathVariable Long classId, @PathVariable Long studentId) {
         log.info("Removing student with ID: {} from class with ID: {}", studentId, classId);
         classService.removeStudentFromClass(classId, studentId);
+        return ApiRes.success(null);
+    }
+
+    @PutMapping("/{classId}/empower/{email}")
+    public ApiRes<User> empowerClassForTeacher(
+            @PathVariable Long classId,
+            @PathVariable String email
+    ) {
+        log.info("Empowering class with ID: {} for teacher with ID: {}", classId, email);
+        return ApiRes.success(classService.empowerClassForTeacher(classId, email));
+    }
+    @DeleteMapping("/{classId}/empower/{teacherId}")
+    public ApiRes<Void> revokeEmpowermentFromClass(
+            @PathVariable Long classId,
+            @PathVariable Long teacherId
+    ) {
+        log.info("Revoking empowerment from class with ID: {} for teacher with ID: {}", classId, teacherId);
+        classService.revokeEmpowermentFromClass(classId, teacherId);
         return ApiRes.success(null);
     }
 }
