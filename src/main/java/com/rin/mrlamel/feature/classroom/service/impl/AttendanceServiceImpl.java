@@ -45,6 +45,9 @@ public class AttendanceServiceImpl implements AttendanceService {
     public AttendanceSessionDTO getAttendancesBySessionId(Long sessionId, Authentication authentication) {
         ClassSession classSession = classSessionRepository.findById(sessionId)
                 .orElseThrow(() -> new AppException("Class session not found"));
+        if(classSession.getDate().isAfter(LocalDate.now())) {
+            throw new AppException("Cannot access attendance for future sessions");
+        }
         if (!permissionCheckForSessions(authentication, classSession)) {
             throw new AppException("You do not have permission to access this session");
         }
@@ -77,6 +80,9 @@ public class AttendanceServiceImpl implements AttendanceService {
         Attendance attendance = attendanceRepository.findById(attendanceId)
                 .orElseThrow(() -> new AppException("Attendance record not found"));
         ClassSession classSession = attendance.getSession();
+        if(classSession.getDate().isAfter(LocalDate.now())) {
+            throw new AppException("Cannot mark attendance for future sessions");
+        }
 
         if (!permissionCheckForSessions(authentication, classSession)) {
             throw new AppException("You do not have permission to mark attendance for this session");
