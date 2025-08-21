@@ -49,13 +49,17 @@ public class ClassSession {
 
     private String note; // VD: “Buổi bù do 2/9 nghỉ lễ”, “Giáo viên dạy thay”
 
+    String content; // Nội dung buổi học, có thể là video, tài liệu, v.v.
+
     @ManyToOne
     @JoinColumn(name = "teacher_id")
     private User teacher;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private CLASS_SECTION_STATUS status = CLASS_SECTION_STATUS.NONE;
+    private CLASS_SECTION_STATUS status = CLASS_SECTION_STATUS.NOT_YET;
+
+
 
     @CreationTimestamp
     private LocalDate createdAt;

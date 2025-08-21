@@ -59,4 +59,15 @@ public class TeacherClassController {
         return ApiRes.success(classService.findClassesByTeacherParticipated(teacherId));
     }
 
+    @PutMapping("/{classSessionId}/learn")
+    public ApiRes<Void> learnSession(
+            @PathVariable Long classSessionId,
+            @RequestParam String content,
+            Authentication authentication
+    ) {
+        log.info("Learning session with ID: {}", classSessionId);
+        classService.learnSession(classSessionId, content, authentication);
+        return ApiRes.success(null);
+    }
+
 }

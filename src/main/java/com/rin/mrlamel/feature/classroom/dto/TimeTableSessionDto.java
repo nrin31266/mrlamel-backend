@@ -24,7 +24,8 @@ public class TimeTableSessionDto {
     private LocalTime endTime;
     private String note; // VD: “Buổi bù do 2/9 nghỉ lễ”, “Giáo viên dạy thay”
     private User teacher;
-    private CLASS_SECTION_STATUS status = CLASS_SECTION_STATUS.NONE;
+    private CLASS_SECTION_STATUS status = CLASS_SECTION_STATUS.NOT_YET;
     private LocalDate createdAt;
     RoomDto room; // Phòng học
+    String content; // Nội dung buổi học, có thể là video, tài liệu, v.v.
 }

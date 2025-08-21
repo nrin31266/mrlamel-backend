@@ -42,6 +42,6 @@ public class Room {
 //    List<ClassSchedule> schedules;
 
     @JsonIgnore
-    @OneToMany(mappedBy = "room", orphanRemoval = true)
+    @OneToMany(mappedBy = "room")
     List<ClassSession> sessions;
 }

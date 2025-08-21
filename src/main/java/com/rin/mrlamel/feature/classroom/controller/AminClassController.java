@@ -142,4 +142,20 @@ public class AminClassController {
         classService.revokeEmpowermentFromClass(classId, teacherId);
         return ApiRes.success(null);
     }
+    @DeleteMapping("/{classId}")
+    public ApiRes<Void> removeClass(@PathVariable Long classId) {
+        log.info("Removing class with ID: {}", classId);
+        classService.removeClass(classId);
+        return ApiRes.success(null);
+    }
+    @PutMapping("/sessions/{classSessionId}/learn")
+    public ApiRes<Void> learnSession(
+            @PathVariable Long classSessionId,
+            @RequestParam String content,
+            Authentication authentication
+    ) {
+        log.info("Learning session with ID: {}", classSessionId);
+        classService.learnSession(classSessionId, content, authentication);
+        return ApiRes.success(null);
+    }
 }

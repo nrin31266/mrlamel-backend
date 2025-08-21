@@ -30,7 +30,7 @@ public class Branch {
     String phone;
 
     @JsonIgnore
-    @OneToMany(mappedBy = "branch", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "branch", cascade = CascadeType.ALL)
     List<Room> rooms;
 
 

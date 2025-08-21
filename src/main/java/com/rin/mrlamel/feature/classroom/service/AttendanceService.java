@@ -17,5 +17,6 @@ public interface AttendanceService {
 
     AttendanceSessionDTO getAttendancesBySessionId(Long sessionId, Authentication authentication);
     AttendanceDTO markStatusAttendance(Long attendanceId, ATTENDANCE_STATUS status, Authentication authentication);
+
     // void updateAttendance(Long attendanceId, boolean present);
 }

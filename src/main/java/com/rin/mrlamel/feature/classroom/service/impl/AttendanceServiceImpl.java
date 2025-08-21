@@ -1,6 +1,7 @@
 package com.rin.mrlamel.feature.classroom.service.impl;
 
 import com.rin.mrlamel.common.constant.ATTENDANCE_STATUS;
+import com.rin.mrlamel.common.constant.CLASS_SECTION_STATUS;
 import com.rin.mrlamel.common.constant.USER_ROLE;
 import com.rin.mrlamel.common.exception.AppException;
 import com.rin.mrlamel.common.utils.JwtTokenProvider;
@@ -24,6 +25,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -48,16 +50,20 @@ public class AttendanceServiceImpl implements AttendanceService {
         if(classSession.getDate().isAfter(LocalDate.now())) {
             throw new AppException("Cannot access attendance for future sessions");
         }
-        if (!permissionCheckForSessions(authentication, classSession)) {
+        if (permissionCheckForSessions(authentication, classSession)) {
             throw new AppException("You do not have permission to access this session");
         }
-        List<Attendance> attendances = attendanceRepository.findBySessionId(sessionId);
-        List<AbsenceCountDTO> absenceCounts = attendanceRepository.countAbsences(
-                attendances.stream()
-                        .map(attendance -> attendance.getAttendanceEnrollment().getId())
-                        .toList(),
-                LocalDate.now()
-        );
+        List<Attendance> attendances = new ArrayList<>();
+        List<AbsenceCountDTO> absenceCounts = new ArrayList<>();
+        if(classSession.getStatus().equals(CLASS_SECTION_STATUS.DONE)){
+            attendances = attendanceRepository.findBySessionId(sessionId);
+            absenceCounts = attendanceRepository.countAbsences(
+                    attendances.stream()
+                            .map(attendance -> attendance.getAttendanceEnrollment().getId())
+                            .toList(),
+                    LocalDate.now()
+            );
+        }
 
         Map<Long, Double> absenceCountMap = absenceCounts.stream()
                 .collect(Collectors.toMap(AbsenceCountDTO::getAttendanceId, AbsenceCountDTO::getAbsenceCount));
@@ -84,7 +90,7 @@ public class AttendanceServiceImpl implements AttendanceService {
             throw new AppException("Cannot mark attendance for future sessions");
         }
 
-        if (!permissionCheckForSessions(authentication, classSession)) {
+        if (permissionCheckForSessions(authentication, classSession)) {
             throw new AppException("You do not have permission to mark attendance for this session");
         }
 
@@ -110,13 +116,13 @@ public class AttendanceServiceImpl implements AttendanceService {
             throw new AppException("User not found");
         }
         if(user.getRole().equals(USER_ROLE.ADMIN)) {
-            return true; // Admins can access all sessions
+            return false; // Admins can access all sessions
         }
         if (classSession.getTeacher().getId().equals(userId) ||
             classSession.getClazz().getManagers().contains(user)) {
-            return true; // Teachers can access sessions they teach, and managers can access sessions of their classes
+            return false; // Teachers can access sessions they teach, and managers can access sessions of their classes
         }
 
-        return false;
+        return true;
     }
 }

@@ -5,6 +5,7 @@ import com.rin.mrlamel.common.dto.PageableDto;
 import com.rin.mrlamel.common.exception.AppException;
 import com.rin.mrlamel.common.mapper.PageableMapper;
 import com.rin.mrlamel.common.utils.HolidayService;
+import com.rin.mrlamel.common.utils.JwtTokenProvider;
 import com.rin.mrlamel.feature.classroom.dto.*;
 import com.rin.mrlamel.feature.classroom.dto.req.*;
 import com.rin.mrlamel.feature.classroom.mapper.ClassMapper;
@@ -50,6 +51,7 @@ public class ClassServiceImpl implements ClassService {
     HolidayService holidayService;
     ClassEnrollmentRepository classEnrollmentRepository;
     private final AttendanceRepository attendanceRepository;
+    JwtTokenProvider jwtTokenProvider;
 
     @Override
     public Clazz createClass(CreateClassRequest createClassReq, Authentication authentication) {
@@ -86,6 +88,19 @@ public class ClassServiceImpl implements ClassService {
     public Clazz getClassById(Long classId) {
         return clazzRepository.findById(classId)
                 .orElseThrow(() -> new AppException("Class not found with ID: " + classId));
+    }
+
+    @Override
+    public void removeClass(Long classId) {
+        Clazz clazz = getClassById(classId);
+        if (clazz.getStatus() != CLASS_STATUS.DRAFT) {
+            throw new AppException("Cannot remove class that is not in DRAFT status");
+        }
+        // Xoá tất cả lịch học và buổi học liên quan
+        classScheduleRepository.deleteAll(clazz.getSchedules());
+        classSessionRepository.deleteAll(clazz.getSessions());
+        classEnrollmentRepository.deleteAll(clazz.getEnrollments());
+        clazzRepository.delete(clazz);
     }
 
     @Override
@@ -207,7 +222,7 @@ public class ClassServiceImpl implements ClassService {
                             .endTime(schedule.getEndTime())
                             .teacher(null)
                             .room(null)
-                            .status(CLASS_SECTION_STATUS.NONE)
+                            .status(CLASS_SECTION_STATUS.NOT_YET)
                             .build();
                     sessions.add(session);
                 }
@@ -460,5 +475,36 @@ public class ClassServiceImpl implements ClassService {
                 .toList();
     }
 
+    @Override
+    public void learnSession(Long classSessionId, String content, Authentication authentication) {
+        ClassSession classSession = getClassSessionById(classSessionId);
+        if (classSession.getStatus() != CLASS_SECTION_STATUS.NOT_YET) {
+            throw new AppException("Cannot learn session that is not in NOT_YET status");
+        }
+        if(permissionCheckForSessions(authentication, classSession)) {
+            throw new AppException("You do not have permission mark learn for this session");
+        }
 
+
+        classSession.setContent(content);
+        classSession.setStatus(CLASS_SECTION_STATUS.DONE);
+        classSessionRepository.save(classSession);
+    }
+
+    private boolean permissionCheckForSessions(Authentication authentication, ClassSession classSession) {
+        Long userId = (Long) jwtTokenProvider.getClaim(authentication, "id");
+        User user = userService.getUserById(userId);
+        if (user == null) {
+            throw new AppException("User not found");
+        }
+        if(user.getRole().equals(USER_ROLE.ADMIN)) {
+            return false; // Admins can access all sessions
+        }
+        if (classSession.getTeacher().getId().equals(userId) ||
+            classSession.getClazz().getManagers().contains(user)) {
+            return false; // Teachers can access sessions they teach, and managers can access sessions of their classes
+        }
+
+        return true;
+    }
 }

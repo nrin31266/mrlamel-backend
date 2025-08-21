@@ -23,6 +23,7 @@ public interface ClassService {
             String status
     );
     Clazz getClassById(Long classId);
+    void removeClass(Long classId);
     ClassSchedule createClassSchedule(CreateClassScheduleReq createClassScheduleReq);
     ClassSchedule updateClassSchedule(Long classScheduleId, UpdateClassScheduleReq createClassScheduleReq);
     void deleteClassSchedule(Long classScheduleId);
@@ -44,6 +45,8 @@ public interface ClassService {
     void revokeEmpowermentFromClass(Long classId, Long teacherId);
 
     List<ClazzDto> findClassesByTeacherParticipated(Long teacherId);
+
+    void learnSession(Long classSessionId, String content,Authentication authentication);
 
 
 }

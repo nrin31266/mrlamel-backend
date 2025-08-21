@@ -33,6 +33,7 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
                 FROM Attendance a
                 LEFT JOIN a.session s
                 WHERE s.date <= :date
+                AND s.status = com.rin.mrlamel.common.constant.CLASS_SECTION_STATUS.DONE
                 AND a.attendanceEnrollment.id IN :enrollmentIds
                 GROUP BY a.attendanceEnrollment.id
             """)
@@ -53,6 +54,7 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
                 FROM Attendance a
                 LEFT JOIN a.session s
                 WHERE s.date <= :date
+                AND s.status = com.rin.mrlamel.common.constant.CLASS_SECTION_STATUS.DONE
                 AND a.attendanceEnrollment.id = :enrollmentId
                 GROUP BY a.attendanceEnrollment.id
             """)
