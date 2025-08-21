@@ -91,7 +91,7 @@ public interface ClazzRepository extends JpaRepository<Clazz, Long>, JpaSpecific
     @Query("""
                SELECT c
                 FROM Clazz c
-                WHERE c.status = :status
+                WHERE c.status IN :statuses
                   AND EXISTS (
                     SELECT 1
                     FROM ClassSession s
@@ -99,9 +99,9 @@ public interface ClazzRepository extends JpaRepository<Clazz, Long>, JpaSpecific
                         AND s.teacher.id = :teacherId
                   )
             """)
-    List<Clazz> findClassesByTeacherParticipatedByStatus(
+    List<Clazz> findClassesByTeacherParticipatedByStatuses(
             @Param("teacherId") Long teacherId,
-            @Param("status") CLASS_STATUS status
+            @Param("statuses") List<CLASS_STATUS> statuses
     );
 
 

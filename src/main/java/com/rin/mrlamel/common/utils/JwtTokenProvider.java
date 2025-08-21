@@ -41,6 +41,11 @@ public class JwtTokenProvider {
         if (signerKey.length() < 64) {
             throw new IllegalArgumentException("Signer key must be at least 64 characters");
         }
+
+        List<String> permissions = user.getPermissions().stream()
+                .map(permission -> permission.getName().toUpperCase())
+                .toList();
+
         JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS256);
         JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
                 .jwtID(UUID.randomUUID().toString())
@@ -49,6 +54,7 @@ public class JwtTokenProvider {
                 .claim("id", user.getId())
                 .claim("status", user.getStatus().name())
                 .claim("roles", List.of("ROLE_" + user.getRole().name()))
+                .claim("permissions", permissions) // Ví dụ về quyền
                 .claim("token_type", tokenType) // "access_token" or "refresh_token"
                 .issueTime(new Date())
                 .expirationTime(new Date(Instant.now().plus(expiresIn, ChronoUnit.MILLIS).toEpochMilli()))

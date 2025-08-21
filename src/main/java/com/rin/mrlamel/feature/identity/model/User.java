@@ -18,7 +18,9 @@ import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -69,7 +71,7 @@ public class User {
     @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     List<RefreshToken> refreshTokens;
-//    @JsonIgnore
+    //    @JsonIgnore
 //    @OneToMany(mappedBy = "teacher", orphanRemoval = true, cascade = CascadeType.ALL)
 //    List<ClassSchedule> teacherClassSchedules;
     @JsonIgnore
@@ -87,6 +89,14 @@ public class User {
     @JsonIgnore
     @ManyToMany(mappedBy = "managers")
     List<Clazz> managedClasses; // Classes managed by the user
+
+    @ManyToMany
+    @JoinTable(
+            name = "user_permissions",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "permission_id")
+    )
+    private Set<Permission> permissions = new HashSet<>();
 
     public boolean isProfileComplete() {
         return fullName != null && !fullName.isEmpty() &&

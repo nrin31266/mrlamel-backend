@@ -1,15 +1,12 @@
 package com.rin.mrlamel.feature.classroom.service;
 
 import com.rin.mrlamel.common.dto.PageableDto;
-import com.rin.mrlamel.feature.classroom.dto.SessionDto;
-import com.rin.mrlamel.feature.classroom.dto.TimeTableForTeacherByWeekDto;
-import com.rin.mrlamel.feature.classroom.dto.TimeTableSessionDto;
+import com.rin.mrlamel.feature.classroom.dto.*;
 import com.rin.mrlamel.feature.classroom.dto.req.*;
 import com.rin.mrlamel.feature.classroom.model.ClassEnrollment;
 import com.rin.mrlamel.feature.classroom.model.ClassSchedule;
 import com.rin.mrlamel.feature.classroom.model.ClassSession;
 import com.rin.mrlamel.feature.classroom.model.Clazz;
-import com.rin.mrlamel.feature.classroom.dto.CheckStudentDto;
 import com.rin.mrlamel.feature.identity.model.User;
 import org.springframework.security.core.Authentication;
 
@@ -45,6 +42,8 @@ public interface ClassService {
     TimeTableForTeacherByWeekDto getTimeTableForTeacherByWeek(Long teacherId, int weekNumber);
     User empowerClassForTeacher(Long classId, String email);
     void revokeEmpowermentFromClass(Long classId, Long teacherId);
+
+    List<ClazzDto> findClassesByTeacherParticipated(Long teacherId);
 
 
 }

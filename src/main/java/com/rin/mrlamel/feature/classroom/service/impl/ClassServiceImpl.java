@@ -5,10 +5,7 @@ import com.rin.mrlamel.common.dto.PageableDto;
 import com.rin.mrlamel.common.exception.AppException;
 import com.rin.mrlamel.common.mapper.PageableMapper;
 import com.rin.mrlamel.common.utils.HolidayService;
-import com.rin.mrlamel.feature.classroom.dto.CheckStudentDto;
-import com.rin.mrlamel.feature.classroom.dto.SessionDto;
-import com.rin.mrlamel.feature.classroom.dto.TimeTableForTeacherByWeekDto;
-import com.rin.mrlamel.feature.classroom.dto.TimeTableSessionDto;
+import com.rin.mrlamel.feature.classroom.dto.*;
 import com.rin.mrlamel.feature.classroom.dto.req.*;
 import com.rin.mrlamel.feature.classroom.mapper.ClassMapper;
 import com.rin.mrlamel.feature.classroom.model.*;
@@ -246,9 +243,6 @@ public class ClassServiceImpl implements ClassService {
     }
 
 
-
-
-
     @Override
     public ClassSchedule getClassScheduleById(Long classScheduleId) {
         return classScheduleRepository.findById(classScheduleId)
@@ -315,6 +309,7 @@ public class ClassServiceImpl implements ClassService {
                 .reason(reason)
                 .build();
     }
+
     @Override
     @Transactional
     public ClassEnrollment addStudentToClass(AddStudentToClassRq addStudentToClassRq) {
@@ -454,6 +449,15 @@ public class ClassServiceImpl implements ClassService {
             throw new AppException("Teacher is not a manager of this class");
         }
         clazzRepository.save(clazz);
+    }
+
+    @Override
+    public List<ClazzDto> findClassesByTeacherParticipated(Long teacherId) {
+        User teacher = userService.getUserById(teacherId);
+        List<Clazz> clazzes = clazzRepository.findClassesByTeacherParticipatedByStatuses(teacher.getId(), List.of(CLASS_STATUS.ONGOING, CLASS_STATUS.READY));
+        return clazzes.stream()
+                .map(classMapper::toClazzDTO)
+                .toList();
     }
 
 

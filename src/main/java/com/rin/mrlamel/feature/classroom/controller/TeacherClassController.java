@@ -2,6 +2,7 @@ package com.rin.mrlamel.feature.classroom.controller;
 
 import com.rin.mrlamel.common.dto.response.ApiRes;
 import com.rin.mrlamel.common.utils.JwtTokenProvider;
+import com.rin.mrlamel.feature.classroom.dto.ClazzDto;
 import com.rin.mrlamel.feature.classroom.dto.SessionDto;
 import com.rin.mrlamel.feature.classroom.dto.TimeTableForTeacherByWeekDto;
 import com.rin.mrlamel.feature.classroom.dto.TimeTableSessionDto;
@@ -50,5 +51,12 @@ public class TeacherClassController {
         return ApiRes.success(classService.getTimeTableForTeacherByWeek(teacherId, weekNumber));
     }
 
+    @GetMapping("/participated")
+    public ApiRes<List<ClazzDto>> findClassesByTeacherParticipated(
+            Authentication authentication
+    ) {
+        Long teacherId = (Long) jwtTokenProvider.getClaim(authentication, "id");
+        return ApiRes.success(classService.findClassesByTeacherParticipated(teacherId));
+    }
 
 }

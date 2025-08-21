@@ -11,7 +11,11 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.tomcat.util.http.parser.Authorization;
+import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -23,7 +27,7 @@ public class UserController {
     UserService userService; // Uncomment and inject the service when implemented
 
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') and (#role != 'ADMIN' or hasAuthority('MANAGE_ADMIN'))")
     @GetMapping
     public ApiRes<PageableDto<User>> getUsers(
             @RequestParam(name = "page", defaultValue = "1", required = false) Integer page,
@@ -36,6 +40,9 @@ public class UserController {
     ) {
         log.info("Fetching users with page: {}, size: {}, sort: {}, direction: {}, search: {}, role: {}, status: {}",
                 page, size, sort, direction, search, role, status);
+
+
+
         return ApiRes.success(
                 userService.getAllUsers(
                         page - 1, // Adjusting page number to be zero-based
@@ -48,13 +55,14 @@ public class UserController {
                 )
         );
     }
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') and (#createUserRq.role != 'ADMIN' or hasAuthority('MANAGE_ADMIN'))")
     @PostMapping
     public ApiRes<Void> createUser(@RequestBody CreateUserRq createUserRq) throws MessagingException {
         userService.createUser(createUserRq);
         return ApiRes.success(null);
     }
     @PreAuthorize("hasRole('ADMIN')")
+
     @PutMapping("/{userId}")
     public ApiRes<Void> updateUser(
             @PathVariable String userId,

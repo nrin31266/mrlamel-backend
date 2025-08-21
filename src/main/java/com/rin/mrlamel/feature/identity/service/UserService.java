@@ -6,6 +6,7 @@ import com.rin.mrlamel.feature.identity.dto.req.CreateUserRq;
 import com.rin.mrlamel.feature.identity.dto.req.UpdateUserReq;
 import com.rin.mrlamel.feature.identity.model.User;
 import jakarta.mail.MessagingException;
+import org.springframework.security.access.prepost.PostAuthorize;
 
 import java.util.List;
 
@@ -16,7 +17,9 @@ public interface UserService {
 
     void createUser(CreateUserRq createUserRq) throws MessagingException;
     User createUser(User user);
-    void updateUser(String userId, UpdateUserReq updateUserRq);
+
+    @PostAuthorize("returnObject != null and (returnObject.role != 'ADMIN' or hasAuthority('MANAGE_ADMIN'))")
+    User updateUser(String userId, UpdateUserReq updateUserRq);
     User getUserById(Long userId);
     List<User> getAvailableTeachersForSessions(List<ClassSession> sessions);
     boolean isTeacherAvailableForAllSessions(Long teacherId, List<ClassSession> sessions);

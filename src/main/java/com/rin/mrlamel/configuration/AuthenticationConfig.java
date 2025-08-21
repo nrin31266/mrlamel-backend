@@ -24,6 +24,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -86,10 +87,15 @@ public class AuthenticationConfig {
         return jwt -> {
             String username = jwt.getSubject();
             List<String> roles = jwt.getClaim("roles");
+            List<String> permissions = jwt.getClaim("permissions");
 
-            List<GrantedAuthority> authorities = roles.stream()
+            List<GrantedAuthority> authorities = new ArrayList<>();
+            authorities.addAll(roles.stream()
                     .map(SimpleGrantedAuthority::new)
-                    .collect(Collectors.toList());
+                    .toList());
+            authorities.addAll(permissions.stream()
+                    .map(SimpleGrantedAuthority::new)
+                    .toList());
 
             return new JwtAuthenticationToken(jwt, authorities, username);
         };

@@ -110,7 +110,7 @@ public class UserServiceImp implements com.rin.mrlamel.feature.identity.service.
     }
 
     @Override
-    public void updateUser(String userId, UpdateUserReq updateUserRq) {
+    public User updateUser(String userId, UpdateUserReq updateUserRq) {
         User user = userRepository.findById(Long.valueOf(userId))
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
 
@@ -121,8 +121,7 @@ public class UserServiceImp implements com.rin.mrlamel.feature.identity.service.
         }
 
         // Save the updated user
-        userRepository.save(user);
-        log.info("User updated: {}", user.getEmail());
+        return userRepository.save(user);
 
     }
 
