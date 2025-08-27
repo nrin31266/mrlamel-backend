@@ -71,4 +71,24 @@ public interface ClassSessionRepository extends JpaRepository<ClassSession, Long
             @Param("endOfWeek") LocalDate endOfWeek
     );
 
+    @Query("""
+            SELECT cs FROM ClassSession cs
+            WHERE cs.date = :date
+            ORDER BY cs.startTime ASC
+            """)
+    List<ClassSession> findTimeTableForAllByDay(LocalDate date);
+
+    @Query("""
+    SELECT cs FROM ClassSession cs
+    WHERE (:beforeDate IS NULL OR cs.date >= :beforeDate)
+      AND cs.date <= CURRENT_DATE
+      AND (
+            (cs.date < CURRENT_DATE) 
+            OR (cs.date = CURRENT_DATE AND cs.endTime < CURRENT_TIME)
+          )
+      AND cs.status = com.rin.mrlamel.common.constant.CLASS_SECTION_STATUS.NOT_YET
+    """)
+    List<ClassSession> findMissedSessions(@Param("beforeDate") LocalDate beforeDate);
+
+
 }

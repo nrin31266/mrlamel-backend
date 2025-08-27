@@ -1,6 +1,6 @@
 package com.rin.mrlamel.common.lifecycle;
 
-import com.rin.mrlamel.feature.classroom.service.impl.ClassLifecycleService;
+import com.rin.mrlamel.feature.classroom.service.impl.ClassRoomLifecycleService;
 import jakarta.annotation.PostConstruct;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class LifecycleManager {
-    ClassLifecycleService classLifecycleService;
+    ClassRoomLifecycleService classLifecycleService;
     @PostConstruct
     public void init() {
         // Initialize the lifecycle manager, e.g., start a scheduled task to update class statuses

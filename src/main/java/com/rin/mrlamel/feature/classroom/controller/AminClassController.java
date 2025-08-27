@@ -2,6 +2,7 @@ package com.rin.mrlamel.feature.classroom.controller;
 
 import com.rin.mrlamel.common.dto.response.ApiRes;
 import com.rin.mrlamel.feature.classroom.dto.CheckStudentDto;
+import com.rin.mrlamel.feature.classroom.dto.TimeTableSessionDto;
 import com.rin.mrlamel.feature.classroom.dto.req.*;
 import com.rin.mrlamel.feature.classroom.model.ClassEnrollment;
 import com.rin.mrlamel.feature.classroom.model.ClassSchedule;
@@ -158,5 +159,19 @@ public class AminClassController {
         log.info("Learning session with ID: {}", classSessionId);
         classService.learnSession(classSessionId, content, authentication);
         return ApiRes.success(null);
+    }
+    //getFullCourseTimeTable
+    @GetMapping("/full-course-timetable")
+    public ApiRes<List<TimeTableSessionDto>> getFullCourseTimeTable(
+    ) {
+        return ApiRes.success(classService.getFullCourseTimeTable());
+    }
+    //getMissedSessions
+    @GetMapping("/missed-sessions")
+    public ApiRes<List<TimeTableSessionDto>> getMissedSessions(
+            @RequestParam(defaultValue = "0") Integer daysAgo
+    ) {
+        log.info("Fetching missed sessions from the past {} days", daysAgo);
+        return ApiRes.success(classService.getMissedSessions(daysAgo));
     }
 }

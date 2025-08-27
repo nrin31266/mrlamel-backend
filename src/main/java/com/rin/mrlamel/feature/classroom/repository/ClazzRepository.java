@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 public interface ClazzRepository extends JpaRepository<Clazz, Long>, JpaSpecificationExecutor<Clazz> {
@@ -30,20 +32,29 @@ public interface ClazzRepository extends JpaRepository<Clazz, Long>, JpaSpecific
 //    );
 
     @Query("""
-    SELECT DISTINCT c
-    FROM ClassSession s
-    JOIN s.clazz c
-    JOIN c.enrollments e
-    WHERE e.attendee.id = :attendeeId
-      AND c.id <> :clazzId
-      AND (c.status = 'READY' OR c.status = 'ONGOING')
-      AND s.date >= CURRENT_DATE
-      AND (s.date > CURRENT_DATE OR (s.date = CURRENT_DATE AND s.endTime >= CURRENT_TIME))
-""")
-    List<Clazz> findClassesWithFutureSessionConflict(
+            SELECT DISTINCT c2
+            FROM ClassSession s2
+            JOIN s2.clazz c2
+            JOIN c2.enrollments e2
+            WHERE e2.attendee.id = :attendeeId
+              AND c2.id <> :clazzId
+              AND c2.status IN (com.rin.mrlamel.common.constant.CLASS_STATUS.READY,
+              com.rin.mrlamel.common.constant.CLASS_STATUS.ONGOING)
+              AND EXISTS (
+                SELECT 1
+                FROM ClassSession s1
+                WHERE s1.clazz.id = :clazzId
+                  AND s1.date = s2.date
+                  AND s1.startTime < s2.endTime
+                  AND s1.endTime > s2.startTime
+                  AND (s1.date > CURRENT_DATE OR (s1.date = CURRENT_DATE AND s1.endTime >= CURRENT_TIME))
+              )
+            """)
+    List<Clazz> findClassesWithAnyFutureOverlapAgainstClazz(
             @Param("clazzId") Long clazzId,
             @Param("attendeeId") Long attendeeId
     );
+
 
 
     @Query("""

@@ -11,6 +11,7 @@ import com.rin.mrlamel.feature.identity.model.User;
 import org.springframework.security.core.Authentication;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface ClassService {
@@ -57,6 +58,12 @@ public interface ClassService {
 
     List<TimeTableSessionDto> getTimeTableForStudentByDay(Long studentId, LocalDate date);
     TimeTableByWeekDto getTimeTableForStudentByWeek(Long studentId, int weekNumber);
+
+    // Admin xem tất cả thời khóa biểu hôm nay
+    List<TimeTableSessionDto> getFullCourseTimeTable();
+
+    List<TimeTableSessionDto> getMissedSessions(Integer daysAgo);
+
 
 
 }

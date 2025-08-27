@@ -17,7 +17,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Service
-public class ClassLifecycleService {
+public class ClassRoomLifecycleService {
     private final ClazzRepository clazzRepository;
 
     @Transactional

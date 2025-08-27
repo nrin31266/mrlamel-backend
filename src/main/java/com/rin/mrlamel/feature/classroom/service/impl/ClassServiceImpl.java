@@ -318,7 +318,7 @@ public class ClassServiceImpl implements ClassService {
                 canEnroll = false;
                 reason = "Class is not in a valid state for enrollment: " + clazz.getStatus();
             } else {
-                List<Clazz> classesConflict = clazzRepository.findClassesWithFutureSessionConflict(clazz.getId(), user.getId());
+                List<Clazz> classesConflict = clazzRepository.findClassesWithAnyFutureOverlapAgainstClazz(clazz.getId(), user.getId());
                 log.info("Checking conflicts for user {} in class {}: found {} conflicts", user.getEmail(), clazz.getName(), classesConflict.size());
                 if (!classesConflict.isEmpty()) {
                     exists = true;
@@ -553,6 +553,27 @@ public class ClassServiceImpl implements ClassService {
                                 .toList()
                 )
                 .build();
+    }
+
+    @Override
+    public List<TimeTableSessionDto> getFullCourseTimeTable() {
+        LocalDate today = LocalDate.now();
+        return classSessionRepository.findTimeTableForAllByDay(today)
+                .stream()
+                .map(classMapper::toTimeTableSessionDto)
+                .toList();
+    }
+
+    @Override
+    public List<TimeTableSessionDto> getMissedSessions(Integer daysAgo) {
+        LocalDate beforeDate = null;
+        if (daysAgo != null && daysAgo > 0) {
+            beforeDate = LocalDate.now().minusDays(daysAgo);
+        }
+        return classSessionRepository.findMissedSessions(beforeDate)
+                .stream()
+                .map(classMapper::toTimeTableSessionDto)
+                .toList();
     }
 
     private boolean permissionCheckForSessions(Authentication authentication, ClassSession classSession) {
