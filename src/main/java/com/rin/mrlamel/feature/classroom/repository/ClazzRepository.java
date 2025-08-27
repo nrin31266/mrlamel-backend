@@ -1,16 +1,12 @@
 package com.rin.mrlamel.feature.classroom.repository;
 
-import com.rin.mrlamel.common.constant.CLASS_STATUS;
-import com.rin.mrlamel.feature.classroom.model.ClassSession;
 import com.rin.mrlamel.feature.classroom.model.Clazz;
-import com.rin.mrlamel.feature.classroom.model.Room;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.List;
 
 public interface ClazzRepository extends JpaRepository<Clazz, Long>, JpaSpecificationExecutor<Clazz> {
@@ -91,7 +87,7 @@ public interface ClazzRepository extends JpaRepository<Clazz, Long>, JpaSpecific
     @Query("""
                SELECT c
                 FROM Clazz c
-                WHERE c.status IN :statuses
+                WHERE c.status = com.rin.mrlamel.common.constant.CLASS_STATUS.ONGOING
                   AND EXISTS (
                     SELECT 1
                     FROM ClassSession s
@@ -99,9 +95,8 @@ public interface ClazzRepository extends JpaRepository<Clazz, Long>, JpaSpecific
                         AND s.teacher.id = :teacherId
                   )
             """)
-    List<Clazz> findClassesByTeacherParticipatedByStatuses(
-            @Param("teacherId") Long teacherId,
-            @Param("statuses") List<CLASS_STATUS> statuses
+    List<Clazz> getClassesTeacherIsTeaching(
+            @Param("teacherId") Long teacherId
     );
 
 

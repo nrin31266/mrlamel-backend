@@ -85,12 +85,12 @@ public class Clazz {
     @JoinColumn(name = "create_by_id", nullable = false)
     private User createdBy; // Người tạo lớp học, có thể là giáo viên hoặc quản trị viên
 
-    @ManyToMany
-    @JoinTable(
-            name = "class_manager",
-            joinColumns = @JoinColumn(name = "class_id"),
-            inverseJoinColumns = @JoinColumn(name = "user_id")
-    )
-    private List<User> managers;
+//    @ManyToMany
+//    @JoinTable(
+//            name = "class_manager",
+//            joinColumns = @JoinColumn(name = "class_id"),
+//            inverseJoinColumns = @JoinColumn(name = "user_id")
+//    )
+//    private List<User> managers;
 
 }

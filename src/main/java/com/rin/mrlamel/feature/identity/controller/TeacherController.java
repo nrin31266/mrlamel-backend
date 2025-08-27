@@ -67,6 +67,7 @@ public class TeacherController {
             classSessions = new ArrayList<>();
         }
         userService.assignTeacherToSessions(teacherId, classSessions);
+
         return ApiRes.success(null);
     }
 

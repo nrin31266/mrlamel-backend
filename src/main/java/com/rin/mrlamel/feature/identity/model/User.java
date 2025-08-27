@@ -86,9 +86,6 @@ public class User {
     @OneToMany(mappedBy = "createdBy", orphanRemoval = true)
     List<Clazz> createdByClasses;
 
-    @JsonIgnore
-    @ManyToMany(mappedBy = "managers")
-    List<Clazz> managedClasses; // Classes managed by the user
 
     @ManyToMany
     @JoinTable(

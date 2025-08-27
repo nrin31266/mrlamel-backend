@@ -42,10 +42,11 @@ public class AminClassController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDirection,
+            @RequestParam(required = false) String searchTerm,
             @RequestParam(required = false) String status
     ) {
         log.info("Fetching all classes with pagination and sorting");
-        return ApiRes.success(classService.getAllClasses(page - 1, size, sortBy, sortDirection, status));
+        return ApiRes.success(classService.getAllClasses(page - 1, size, sortBy, sortDirection, status, searchTerm));
     }
 
     @GetMapping("/{classId}")
@@ -125,23 +126,23 @@ public class AminClassController {
         return ApiRes.success(null);
     }
 
-    @PutMapping("/{classId}/empower/{email}")
-    public ApiRes<User> empowerClassForTeacher(
-            @PathVariable Long classId,
-            @PathVariable String email
-    ) {
-        log.info("Empowering class with ID: {} for teacher with ID: {}", classId, email);
-        return ApiRes.success(classService.empowerClassForTeacher(classId, email));
-    }
-    @DeleteMapping("/{classId}/empower/{teacherId}")
-    public ApiRes<Void> revokeEmpowermentFromClass(
-            @PathVariable Long classId,
-            @PathVariable Long teacherId
-    ) {
-        log.info("Revoking empowerment from class with ID: {} for teacher with ID: {}", classId, teacherId);
-        classService.revokeEmpowermentFromClass(classId, teacherId);
-        return ApiRes.success(null);
-    }
+//    @PutMapping("/{classId}/empower/{email}")
+//    public ApiRes<User> empowerClassForTeacher(
+//            @PathVariable Long classId,
+//            @PathVariable String email
+//    ) {
+//        log.info("Empowering class with ID: {} for teacher with ID: {}", classId, email);
+//        return ApiRes.success(classService.empowerClassForTeacher(classId, email));
+//    }
+//    @DeleteMapping("/{classId}/empower/{teacherId}")
+//    public ApiRes<Void> revokeEmpowermentFromClass(
+//            @PathVariable Long classId,
+//            @PathVariable Long teacherId
+//    ) {
+//        log.info("Revoking empowerment from class with ID: {} for teacher with ID: {}", classId, teacherId);
+//        classService.revokeEmpowermentFromClass(classId, teacherId);
+//        return ApiRes.success(null);
+//    }
     @DeleteMapping("/{classId}")
     public ApiRes<Void> removeClass(@PathVariable Long classId) {
         log.info("Removing class with ID: {}", classId);

@@ -118,8 +118,7 @@ public class AttendanceServiceImpl implements AttendanceService {
         if(user.getRole().equals(USER_ROLE.ADMIN)) {
             return false; // Admins can access all sessions
         }
-        if (classSession.getTeacher().getId().equals(userId) ||
-            classSession.getClazz().getManagers().contains(user)) {
+        if (classSession.getTeacher().getId().equals(userId)) {
             return false; // Teachers can access sessions they teach, and managers can access sessions of their classes
         }
 

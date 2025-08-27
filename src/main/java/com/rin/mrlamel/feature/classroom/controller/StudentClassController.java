@@ -20,32 +20,35 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/teacher/classes")
+@RequestMapping("/api/v1/teacher/students")
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
-@PreAuthorize("hasRole('TEACHER')")
-public class TeacherClassController {
+public class StudentClassController {
     ClassService classService;
     AttendanceService attendanceService;
     JwtTokenProvider jwtTokenProvider;
     UserService userService;
-    @GetMapping("/{teacherId}/time-table/day")
-    public ApiRes<List<TimeTableSessionDto>> getTimeTableForTeacherByDay(
-            @PathVariable Long teacherId,
-            @RequestParam(value = "date", required = false) LocalDate date
+    @GetMapping("/time-table/day")
+    public ApiRes<List<TimeTableSessionDto>> getTimeTableForStudentByDay(
+            @RequestParam(value = "date", required = false) LocalDate date,
+            Authentication authentication
     ) {
         if (date == null) {
             date = LocalDate.now();
         }
-        return ApiRes.success(classService.getTimeTableForTeacherByDay(teacherId, date));
+        Long studentId = (Long) jwtTokenProvider.getClaim(authentication, "id");
+        return ApiRes.success(classService.getTimeTableForStudentByDay(studentId, date));
     }
 
-    @GetMapping("/{teacherId}/time-table/week")
+    @GetMapping("/time-table/week")
     public ApiRes<TimeTableByWeekDto> getTimeTableForTeacherByWeek(
-            @PathVariable Long teacherId,
+            Authentication authentication,
             @RequestParam(value = "weekNumber", required = false, defaultValue = "0") Integer weekNumber
     ) {
-        return ApiRes.success(classService.getTimeTableForTeacherByWeek(teacherId, weekNumber));
+        log.info("Fetching timetable for week number: {}", weekNumber);
+        Long studentId = (Long) jwtTokenProvider.getClaim(authentication, "id");
+        TimeTableByWeekDto timeTable = classService.getTimeTableForStudentByWeek(studentId, weekNumber);
+        return ApiRes.success(timeTable);
     }
 
 //    @GetMapping("/participated")
@@ -56,23 +59,6 @@ public class TeacherClassController {
 //        return ApiRes.success(classService.findTheClassesThatTheTeachersAreTeaching(teacherId));
 //    }
 
-    @PutMapping("/{classSessionId}/learn")
-    public ApiRes<Void> learnSession(
-            @PathVariable Long classSessionId,
-            @RequestParam String content,
-            Authentication authentication
-    ) {
-        log.info("Learning session with ID: {}", classSessionId);
-        classService.learnSession(classSessionId, content, authentication);
-        return ApiRes.success(null);
-    }
-    @GetMapping("/teaching")
-    public ApiRes<?> getClassesTeacherIsTeaching(
-            Authentication authentication
-    ) {
-        log.info("Fetching all classes with pagination and sorting");
-        String teacherId = (String) jwtTokenProvider.getClaim(authentication, "id");
-        return ApiRes.success(classService.getClassesTeacherIsTeaching(Long.parseLong(teacherId)));
-    }
+
 
 }

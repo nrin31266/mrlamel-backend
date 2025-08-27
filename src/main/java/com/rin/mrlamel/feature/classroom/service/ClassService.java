@@ -20,7 +20,8 @@ public interface ClassService {
             int size,
             String sortBy,
             String sortDirection,
-            String status
+            String status,
+            String searchTerm
     );
     Clazz getClassById(Long classId);
     void removeClass(Long classId);
@@ -40,13 +41,22 @@ public interface ClassService {
     List<ClassEnrollment> getClassEnrollmentsByClassId(Long classId);
 
     List<TimeTableSessionDto> getTimeTableForTeacherByDay(Long teacherId, LocalDate date);
-    TimeTableForTeacherByWeekDto getTimeTableForTeacherByWeek(Long teacherId, int weekNumber);
-    User empowerClassForTeacher(Long classId, String email);
-    void revokeEmpowermentFromClass(Long classId, Long teacherId);
+    TimeTableByWeekDto getTimeTableForTeacherByWeek(Long teacherId, int weekNumber);
+//    User empowerClassForTeacher(Long classId, String email);
+//    void revokeEmpowermentFromClass(Long classId, Long teacherId);
 
-    List<ClazzDto> findClassesByTeacherParticipated(Long teacherId);
-
+    List<ClazzDto> getClassesTeacherIsTeaching(Long teacherId);
+    List<ClazzDto> getClassesTeacherIsManaging(Long teacherId, int page,
+                                            int size,
+                                            String sortBy,
+                                            String sortDirection,
+                                            String status,
+                                            String searchTerm);
     void learnSession(Long classSessionId, String content,Authentication authentication);
+
+
+    List<TimeTableSessionDto> getTimeTableForStudentByDay(Long studentId, LocalDate date);
+    TimeTableByWeekDto getTimeTableForStudentByWeek(Long studentId, int weekNumber);
 
 
 }

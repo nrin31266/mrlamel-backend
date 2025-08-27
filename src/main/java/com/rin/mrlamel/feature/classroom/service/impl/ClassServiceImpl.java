@@ -67,12 +67,35 @@ public class ClassServiceImpl implements ClassService {
     }
 
     @Override
-    public PageableDto<Clazz> getAllClasses(int page, int size, String sortBy, String sortDirection, String status) {
+    public PageableDto<Clazz> getAllClasses(int page, int size, String sortBy, String sortDirection, String status,
+                                            String searchTerm) {
         Specification<Clazz> spec = (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
             if (status != null && !status.isEmpty()) {
                 predicates.add(criteriaBuilder.equal(root.get("status"), status));
             }
+            if (searchTerm != null && !searchTerm.isEmpty()) {
+                String searchPattern = "%" + searchTerm.toLowerCase() + "%";
+                predicates.add(criteriaBuilder.or(
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), searchPattern),
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("description")), searchPattern)
+                ));
+            }
+//            // teacherId filter bằng subquery EXISTS
+//            if (teacherId != null && !teacherId.isEmpty()) {
+//                Long teacherIdLong = Long.parseLong(teacherId);
+//
+//                Subquery<Integer> subquery = query.subquery(Integer.class);
+//                Root<ClassSession> sessionRoot = subquery.from(ClassSession.class);
+//                subquery.select(criteriaBuilder.literal(1));
+//                subquery.where(
+//                        criteriaBuilder.equal(sessionRoot.get("clazz"), root),
+//                        criteriaBuilder.equal(sessionRoot.get("teacher").get("id"), teacherIdLong)
+//                );
+//
+//                predicates.add(criteriaBuilder.exists(subquery));
+//
+//            }
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
@@ -360,9 +383,6 @@ public class ClassServiceImpl implements ClassService {
         ClassEnrollment classEnrollment = ClassEnrollment.builder()
                 .clazz(clazz)
                 .attendee(user)
-                .isPaid(addStudentToClassRq.getIsPaid())
-                .tuitionFee(clazz.getCourse().getFee())
-                .paidAmount(clazz.getCourse().getFee() * (addStudentToClassRq.getIsPaid() ? 1 : 0))
                 .enrolledAt(LocalDateTime.now())
                 .build();
 
@@ -421,14 +441,14 @@ public class ClassServiceImpl implements ClassService {
     }
 
     @Override
-    public TimeTableForTeacherByWeekDto getTimeTableForTeacherByWeek(Long teacherId, int weekNumber) {
+    public TimeTableByWeekDto getTimeTableForTeacherByWeek(Long teacherId, int weekNumber) {
 
         LocalDate now = LocalDate.now();
         // 0 is the current week, 1 is next week, etc.
         LocalDate startOfWeek = now.with(DayOfWeek.MONDAY).plusWeeks(weekNumber);
         LocalDate endOfWeek = startOfWeek.plusDays(6);
 
-        return TimeTableForTeacherByWeekDto.builder()
+        return TimeTableByWeekDto.builder()
                 .weekStartDate(startOfWeek)
                 .weekEndDate(endOfWeek)
                 .weekNumber(weekNumber)
@@ -441,39 +461,45 @@ public class ClassServiceImpl implements ClassService {
                 .build();
     }
 
-    @Override
-    public User empowerClassForTeacher(Long classId, String email) {
-        Clazz clazz = getClassById(classId);
-        User teacher = userService.getUserByEmail(email);
-        if (teacher == null || !teacher.getRole().equals(USER_ROLE.TEACHER)) {
-            throw new AppException("Teacher not found with email: " + email);
-        }
-        clazz.getManagers().add(teacher);
-        clazzRepository.save(clazz);
-        return teacher;
-    }
+//    @Override
+//    public User empowerClassForTeacher(Long classId, String email) {
+//        Clazz clazz = getClassById(classId);
+//        User teacher = userService.getUserByEmail(email);
+//        if (teacher == null || !teacher.getRole().equals(USER_ROLE.TEACHER)) {
+//            throw new AppException("Teacher not found with email: " + email);
+//        }
+//        if (!clazz.getManagers().contains(teacher)) {
+//            throw new AppException("Teacher is already a manager of this class");
+//        }
+//        return teacher;
+//    }
+//
+//    @Override
+//    public void revokeEmpowermentFromClass(Long classId, Long teacherId) {
+//        Clazz clazz = getClassById(classId);
+//        User teacher = userService.getUserById(teacherId);
+//        if (teacher == null || !teacher.getRole().equals(USER_ROLE.TEACHER)) {
+//            throw new AppException("Teacher not found with ID: " + teacherId);
+//        }
+//        if (!clazz.getManagers().remove(teacher)) {
+//            throw new AppException("Teacher is not a manager of this class");
+//        }
+//        clazzRepository.save(clazz);
+//    }
 
     @Override
-    public void revokeEmpowermentFromClass(Long classId, Long teacherId) {
-        Clazz clazz = getClassById(classId);
-        User teacher = userService.getUserById(teacherId);
-        if (teacher == null || !teacher.getRole().equals(USER_ROLE.TEACHER)) {
-            throw new AppException("Teacher not found with ID: " + teacherId);
-        }
-        if (!clazz.getManagers().remove(teacher)) {
-            throw new AppException("Teacher is not a manager of this class");
-        }
-        clazzRepository.save(clazz);
-    }
-
-    @Override
-    public List<ClazzDto> findClassesByTeacherParticipated(Long teacherId) {
-        User teacher = userService.getUserById(teacherId);
-        List<Clazz> clazzes = clazzRepository.findClassesByTeacherParticipatedByStatuses(teacher.getId(), List.of(CLASS_STATUS.ONGOING, CLASS_STATUS.READY));
-        return clazzes.stream()
+    public List<ClazzDto> getClassesTeacherIsTeaching(Long teacherId) {
+        return clazzRepository.getClassesTeacherIsTeaching(teacherId)
+                .stream()
                 .map(classMapper::toClazzDTO)
                 .toList();
     }
+
+    @Override
+    public List<ClazzDto> getClassesTeacherIsManaging(Long teacherId, int page, int size, String sortBy, String sortDirection, String status, String searchTerm) {
+        return List.of();
+    }
+
 
     @Override
     public void learnSession(Long classSessionId, String content, Authentication authentication) {
@@ -491,6 +517,44 @@ public class ClassServiceImpl implements ClassService {
         classSessionRepository.save(classSession);
     }
 
+    @Override
+    public List<TimeTableSessionDto> getTimeTableForStudentByDay(Long studentId, LocalDate date) {
+        User student = userService.getUserById(studentId);
+        if (student == null || !student.getRole().equals(USER_ROLE.STUDENT)) {
+            throw new AppException("Student not found with ID: " + studentId);
+        }
+
+        return classSessionRepository.findTimeTableForStudentByDay(studentId, date)
+                .stream()
+                .map(classMapper::toTimeTableSessionDto)
+                .toList();
+    }
+
+    @Override
+    public TimeTableByWeekDto getTimeTableForStudentByWeek(Long studentId, int weekNumber) {
+        User student = userService.getUserById(studentId);
+        if (student == null || !student.getRole().equals(USER_ROLE.STUDENT)) {
+            throw new AppException("Student not found with ID: " + studentId);
+        }
+
+        LocalDate now = LocalDate.now();
+        // 0 is the current week, 1 is next week, etc.
+        LocalDate startOfWeek = now.with(DayOfWeek.MONDAY).plusWeeks(weekNumber);
+        LocalDate endOfWeek = startOfWeek.plusDays(6);
+
+        return TimeTableByWeekDto.builder()
+                .weekStartDate(startOfWeek)
+                .weekEndDate(endOfWeek)
+                .weekNumber(weekNumber)
+                .sessions(
+                        classSessionRepository.findTimeTableForStudentByWeek(studentId, startOfWeek, endOfWeek)
+                                .stream()
+                                .map(classMapper::toTimeTableSessionDto)
+                                .toList()
+                )
+                .build();
+    }
+
     private boolean permissionCheckForSessions(Authentication authentication, ClassSession classSession) {
         Long userId = (Long) jwtTokenProvider.getClaim(authentication, "id");
         User user = userService.getUserById(userId);
@@ -500,8 +564,7 @@ public class ClassServiceImpl implements ClassService {
         if(user.getRole().equals(USER_ROLE.ADMIN)) {
             return false; // Admins can access all sessions
         }
-        if (classSession.getTeacher().getId().equals(userId) ||
-            classSession.getClazz().getManagers().contains(user)) {
+        if (classSession.getTeacher().getId().equals(userId)) {
             return false; // Teachers can access sessions they teach, and managers can access sessions of their classes
         }
 

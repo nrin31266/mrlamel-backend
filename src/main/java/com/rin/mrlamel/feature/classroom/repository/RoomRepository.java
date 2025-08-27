@@ -16,9 +16,6 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
 
     List<Room> findByBranchId(Long branchId);
 
-    /**
-     * Lấy danh sách Room khả dụng cho 1 session chưa bắt đầu
-     */
     @Query("""
         SELECT r
         FROM Room r

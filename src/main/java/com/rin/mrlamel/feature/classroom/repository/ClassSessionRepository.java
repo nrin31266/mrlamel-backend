@@ -31,6 +31,7 @@ public interface ClassSessionRepository extends JpaRepository<ClassSession, Long
             @Param("teacherId") Long teacherId,
             @Param("date") LocalDate date
     );
+
     @Query("""
             SELECT cs FROM ClassSession cs
             WHERE cs.teacher.id = :teacherId
@@ -42,4 +43,32 @@ public interface ClassSessionRepository extends JpaRepository<ClassSession, Long
             LocalDate startOfWeek,
             LocalDate endOfWeek
     );
+
+    @Query("""
+            SELECT cs FROM ClassSession cs
+            JOIN cs.clazz c
+            JOIN c.enrollments ce
+            WHERE ce.attendee.id = :studentId
+              AND cs.date = :date
+            ORDER BY cs.startTime ASC
+            """)
+    List<ClassSession> findTimeTableForStudentByDay(
+            @Param("studentId") Long studentId,
+            @Param("date") LocalDate date
+    );
+
+    @Query("""
+            SELECT cs FROM ClassSession cs
+            JOIN cs.clazz c
+            JOIN c.enrollments ce
+            WHERE ce.attendee.id = :studentId
+              AND cs.date BETWEEN :startOfWeek AND :endOfWeek
+            ORDER BY cs.date ASC, cs.startTime ASC
+            """)
+    List<ClassSession> findTimeTableForStudentByWeek(
+            @Param("studentId") Long studentId,
+            @Param("startOfWeek") LocalDate startOfWeek,
+            @Param("endOfWeek") LocalDate endOfWeek
+    );
+
 }
