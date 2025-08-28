@@ -1,5 +1,6 @@
 package com.rin.mrlamel.feature.classroom.repository;
 
+import com.rin.mrlamel.feature.classroom.dto.LearnedSessionDto;
 import com.rin.mrlamel.feature.classroom.model.ClassSession;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -79,16 +80,42 @@ public interface ClassSessionRepository extends JpaRepository<ClassSession, Long
     List<ClassSession> findTimeTableForAllByDay(LocalDate date);
 
     @Query("""
-    SELECT cs FROM ClassSession cs
-    WHERE (:beforeDate IS NULL OR cs.date >= :beforeDate)
-      AND cs.date <= CURRENT_DATE
-      AND (
-            (cs.date < CURRENT_DATE) 
-            OR (cs.date = CURRENT_DATE AND cs.endTime < CURRENT_TIME)
-          )
-      AND cs.status = com.rin.mrlamel.common.constant.CLASS_SECTION_STATUS.NOT_YET
-    """)
+            SELECT cs FROM ClassSession cs
+            WHERE (:beforeDate IS NULL OR cs.date >= :beforeDate)
+              AND cs.date <= CURRENT_DATE
+              AND (
+                    (cs.date < CURRENT_DATE) 
+                    OR (cs.date = CURRENT_DATE AND cs.endTime < CURRENT_TIME)
+                  )
+              AND cs.status = com.rin.mrlamel.common.constant.CLASS_SECTION_STATUS.NOT_YET
+            """)
     List<ClassSession> findMissedSessions(@Param("beforeDate") LocalDate beforeDate);
+
+    @Query("""
+               SELECT cs.id,
+               a.status,
+               ae.attendee.id,
+               ae.attendee.fullName,
+               ae.attendee.email
+               FROM ClassSession cs
+               JOIN cs.clazz c
+               JOIN cs.attendances a
+               JOIN a.attendanceEnrollment ae
+               WHERE c.id = :clazzId
+               AND cs.status = com.rin.mrlamel.common.constant.CLASS_SECTION_STATUS.DONE
+                AND a.status IN (com.rin.mrlamel.common.constant.ATTENDANCE_STATUS.ABSENT,
+                 com.rin.mrlamel.common.constant.ATTENDANCE_STATUS.LATE,
+                 com.rin.mrlamel.common.constant.ATTENDANCE_STATUS.EXCUSED)
+            """)
+    List<Object[]> findAttendanceDetailsByClazzId(Long clazzId);
+
+    @Query("""
+            SELECT cs FROM ClassSession cs
+            WHERE cs.clazz.id = :clazzId
+              AND cs.status = com.rin.mrlamel.common.constant.CLASS_SECTION_STATUS.DONE
+            ORDER BY cs.date ASC, cs.startTime ASC
+            """)
+    List<ClassSession> findSessionLearnedByClassId(Long clazzId);
 
 
 }

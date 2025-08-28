@@ -2,8 +2,10 @@ package com.rin.mrlamel.feature.classroom.controller;
 
 import com.rin.mrlamel.common.dto.response.ApiRes;
 import com.rin.mrlamel.common.utils.JwtTokenProvider;
+import com.rin.mrlamel.feature.classroom.dto.ClassProgressDTO;
 import com.rin.mrlamel.feature.classroom.dto.TimeTableByWeekDto;
 import com.rin.mrlamel.feature.classroom.dto.TimeTableSessionDto;
+import com.rin.mrlamel.feature.classroom.mapper.ClassMapper;
 import com.rin.mrlamel.feature.classroom.service.AttendanceService;
 import com.rin.mrlamel.feature.classroom.service.ClassService;
 import com.rin.mrlamel.feature.identity.service.UserService;
@@ -11,7 +13,6 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,11 +24,13 @@ import java.util.List;
 @RequestMapping("/api/v1/student/classes")
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
-public class StudentClassController {
+public class ClassController {
     ClassService classService;
     AttendanceService attendanceService;
     JwtTokenProvider jwtTokenProvider;
     UserService userService;
+    ClassMapper classMapper;
+
     @GetMapping("/time-table/day")
     public ApiRes<List<TimeTableSessionDto>> getTimeTableForStudentByDay(
             @RequestParam(value = "date", required = false) LocalDate date,
@@ -51,13 +54,22 @@ public class StudentClassController {
         return ApiRes.success(timeTable);
     }
 
-//    @GetMapping("/participated")
+    //    @GetMapping("/participated")
 //    public ApiRes<List<ClazzDto>> findClassesByTeacherParticipated(
 //            Authentication authentication
 //    ) {
 //        Long teacherId = (Long) jwtTokenProvider.getClaim(authentication, "id");
 //        return ApiRes.success(classService.findTheClassesThatTheTeachersAreTeaching(teacherId));
 //    }
+    //getLearnedSessionsForClass
+    @GetMapping("/class-progress/{classId}")
+    public ApiRes<ClassProgressDTO> getLearnedSessionsForClass(@PathVariable Long classId) {
+        return ApiRes.success(
+                ClassProgressDTO.builder()
+                        .learnedSessions(classService.getLearnedSessionsForClass(classId))
+                        .clazz(classMapper.toClazzDTO(classService.getClassById(classId)))
+                        .build());
+    }
 
 
 

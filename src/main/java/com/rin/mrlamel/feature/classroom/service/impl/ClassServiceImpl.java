@@ -576,6 +576,42 @@ public class ClassServiceImpl implements ClassService {
                 .toList();
     }
 
+    @Override
+    public List<LearnedSessionDto> getLearnedSessionsForClass(Long classId) {
+        List<ClassSession> sessions = classSessionRepository.findSessionLearnedByClassId(classId);
+        List<Object[]> details = classSessionRepository.findAttendanceDetailsByClazzId(classId);
+
+        // Map<sessionId, Map<status, List<studentInfo>>>
+        Map<Long, Map<ATTENDANCE_STATUS, List<String>>> attendanceMap = new HashMap<>();
+        for (Object[] detail : details) {
+            Long sessionId = (Long) detail[0];
+            ATTENDANCE_STATUS status = (ATTENDANCE_STATUS) detail[1];
+            String fullName = (String) detail[3];
+            String email = (String) detail[4];
+
+            attendanceMap
+                    .computeIfAbsent(sessionId, k -> new HashMap<>())
+                    .computeIfAbsent(status, k -> new ArrayList<>())
+                    .add(fullName + " (" + email + ")");
+        }
+
+        List<LearnedSessionDto> result = new ArrayList<>();
+        for (ClassSession session : sessions) {
+            Map<ATTENDANCE_STATUS, List<String>> statusDetails =
+                    attendanceMap.getOrDefault(session.getId(), Collections.emptyMap());
+
+            LearnedSessionDto dto = LearnedSessionDto.builder()
+                    .session(classMapper.toSessionDto(session))
+                    .absentStudents(statusDetails.getOrDefault(ATTENDANCE_STATUS.ABSENT, Collections.emptyList()))
+                    .lateStudents(statusDetails.getOrDefault(ATTENDANCE_STATUS.LATE, Collections.emptyList()))
+                    .excuseStudents(statusDetails.getOrDefault(ATTENDANCE_STATUS.EXCUSED, Collections.emptyList()))
+                    .build();
+            result.add(dto);
+        }
+
+        return result;
+    }
+
     private boolean permissionCheckForSessions(Authentication authentication, ClassSession classSession) {
         Long userId = (Long) jwtTokenProvider.getClaim(authentication, "id");
         User user = userService.getUserById(userId);

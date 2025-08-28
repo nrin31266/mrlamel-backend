@@ -61,8 +61,10 @@ public interface ClassService {
 
     // Admin xem tất cả thời khóa biểu hôm nay
     List<TimeTableSessionDto> getFullCourseTimeTable();
-
+    // Admin xem tất cả các buổi học đã bị bỏ lỡ trong khoảng thời gian nhất định (vd: 7 ngày gần đây)
     List<TimeTableSessionDto> getMissedSessions(Integer daysAgo);
+
+    List<LearnedSessionDto> getLearnedSessionsForClass(Long classId);
 
 
 
