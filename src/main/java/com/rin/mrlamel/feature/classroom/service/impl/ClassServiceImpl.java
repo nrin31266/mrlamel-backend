@@ -15,7 +15,9 @@ import com.rin.mrlamel.feature.identity.model.User;
 import com.rin.mrlamel.feature.identity.service.AuthenticationService;
 import com.rin.mrlamel.feature.classroom.service.ClassService;
 import com.rin.mrlamel.feature.identity.service.UserService;
-import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.Query;
+import jakarta.persistence.criteria.*;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -52,6 +54,7 @@ public class ClassServiceImpl implements ClassService {
     ClassEnrollmentRepository classEnrollmentRepository;
     private final AttendanceRepository attendanceRepository;
     JwtTokenProvider jwtTokenProvider;
+    EntityManager entityManager;
 
     @Override
     public Clazz createClass(CreateClassRequest createClassReq, Authentication authentication) {
@@ -66,46 +69,7 @@ public class ClassServiceImpl implements ClassService {
         return clazzRepository.save(clazz);
     }
 
-    @Override
-    public PageableDto<Clazz> getAllClasses(int page, int size, String sortBy, String sortDirection, String status,
-                                            String searchTerm) {
-        Specification<Clazz> spec = (root, query, criteriaBuilder) -> {
-            List<Predicate> predicates = new ArrayList<>();
-            if (status != null && !status.isEmpty()) {
-                predicates.add(criteriaBuilder.equal(root.get("status"), status));
-            }
-            if (searchTerm != null && !searchTerm.isEmpty()) {
-                String searchPattern = "%" + searchTerm.toLowerCase() + "%";
-                predicates.add(criteriaBuilder.or(
-                        criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), searchPattern),
-                        criteriaBuilder.like(criteriaBuilder.lower(root.get("description")), searchPattern)
-                ));
-            }
-//            // teacherId filter bằng subquery EXISTS
-//            if (teacherId != null && !teacherId.isEmpty()) {
-//                Long teacherIdLong = Long.parseLong(teacherId);
-//
-//                Subquery<Integer> subquery = query.subquery(Integer.class);
-//                Root<ClassSession> sessionRoot = subquery.from(ClassSession.class);
-//                subquery.select(criteriaBuilder.literal(1));
-//                subquery.where(
-//                        criteriaBuilder.equal(sessionRoot.get("clazz"), root),
-//                        criteriaBuilder.equal(sessionRoot.get("teacher").get("id"), teacherIdLong)
-//                );
-//
-//                predicates.add(criteriaBuilder.exists(subquery));
-//
-//            }
 
-            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
-        };
-        Pageable pageable;
-        Sort sort = Sort.by(Sort.Direction.fromString(sortDirection), sortBy);
-        pageable = PageRequest.of(page, size, sort);
-        Page<Clazz> pageResult = clazzRepository.findAll(spec, pageable);
-
-        return pageableMapper.toPageableDto(pageResult);
-    }
 
     @Override
     public Clazz getClassById(Long classId) {
@@ -611,6 +575,95 @@ public class ClassServiceImpl implements ClassService {
 
         return result;
     }
+    @Override
+    public PageableDto<Clazz> getAllClasses(
+            Integer page,
+            Integer size,
+            String sortBy,
+            String sortDirection,
+            String status,
+            String searchTerm,
+            List<Predicate> extraPredicates
+    ) {
+        Specification<Clazz> spec = (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            if (status != null && !status.isEmpty()) {
+                predicates.add(criteriaBuilder.equal(root.get("status"), status));
+            }
+            if (searchTerm != null && !searchTerm.isEmpty()) {
+                String searchPattern = "%" + searchTerm.toLowerCase() + "%";
+                predicates.add(criteriaBuilder.or(
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), searchPattern),
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("description")), searchPattern)
+                ));
+            }
+
+            // 👇 merge thêm điều kiện truyền ngoài vào
+            if (extraPredicates != null && !extraPredicates.isEmpty()) {
+                predicates.addAll(extraPredicates);
+            }
+
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+
+        Sort sort = Sort.by(Sort.Direction.fromString(sortDirection), sortBy);
+
+        if (page == null || size == null) {
+            page = 0;
+            size = 100; // Trả về tối đa 100 bản ghi nếu không phân trang
+        }
+        Pageable pageable = PageRequest.of(page, size, sort);
+        Page<Clazz> pageResult = clazzRepository.findAll(spec, pageable);
+        return pageableMapper.toPageableDto(pageResult);
+    }
+
+    @Override
+    public List<ClazzDto> getClassesStudentIsEnrolledIn(
+            Long studentId,
+            Integer page,
+            Integer size,
+            String sortBy,
+            String sortDirection,
+            String status,
+            String searchTerm
+    ) {
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+
+        List<Predicate> extraPredicates = new ArrayList<>();
+
+        Specification<Clazz> spec = (root, query, criteriaBuilder) -> {
+            Subquery<Integer> subquery = query.subquery(Integer.class);
+            Root<ClassEnrollment> enrollmentRoot = subquery.from(ClassEnrollment.class);
+
+            subquery.select(cb.literal(1));
+            subquery.where(
+                    cb.equal(enrollmentRoot.get("attendee").get("id"), studentId),
+                    cb.equal(enrollmentRoot.get("clazz").get("id"), root.get("id"))
+            );
+
+            extraPredicates.add(cb.exists(subquery));
+            return null; // không dùng ở đây, chỉ tạo predicate để truyền thôi
+        };
+
+        PageableDto<Clazz> clazzPage = getAllClasses(
+                page,
+                size,
+                sortBy,
+                sortDirection,
+                status,
+                searchTerm,
+                extraPredicates
+        );
+
+        // map sang DTO
+        return clazzPage.getContent()
+                .stream()
+                .map(classMapper::toClazzDTO)
+                .toList();
+    }
+
+
 
     private boolean permissionCheckForSessions(Authentication authentication, ClassSession classSession) {
         Long userId = (Long) jwtTokenProvider.getClaim(authentication, "id");

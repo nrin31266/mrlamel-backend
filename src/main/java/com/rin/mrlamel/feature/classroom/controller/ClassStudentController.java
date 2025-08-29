@@ -3,6 +3,7 @@ package com.rin.mrlamel.feature.classroom.controller;
 import com.rin.mrlamel.common.dto.response.ApiRes;
 import com.rin.mrlamel.common.utils.JwtTokenProvider;
 import com.rin.mrlamel.feature.classroom.dto.ClassProgressDTO;
+import com.rin.mrlamel.feature.classroom.dto.ClazzDto;
 import com.rin.mrlamel.feature.classroom.dto.TimeTableByWeekDto;
 import com.rin.mrlamel.feature.classroom.dto.TimeTableSessionDto;
 import com.rin.mrlamel.feature.classroom.mapper.ClassMapper;
@@ -24,7 +25,7 @@ import java.util.List;
 @RequestMapping("/api/v1/student/classes")
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
-public class ClassController {
+public class ClassStudentController {
     ClassService classService;
     AttendanceService attendanceService;
     JwtTokenProvider jwtTokenProvider;
@@ -69,6 +70,21 @@ public class ClassController {
                         .learnedSessions(classService.getLearnedSessionsForClass(classId))
                         .clazz(classMapper.toClazzDTO(classService.getClassById(classId)))
                         .build());
+    }
+    // getClassesStudentIsEnrolledIn
+    @GetMapping("/studying")
+    public ApiRes<List<ClazzDto>> getClassesStudentStudying(
+            Authentication authentication
+    ) {
+        Long studentId = (Long) jwtTokenProvider.getClaim(authentication, "id");
+
+        return ApiRes.success( classService.getClassesStudentIsEnrolledIn(studentId,
+                0,
+                100,
+                "id",
+                "DESC",
+                "ONGOING",
+                ""));
     }
 
 

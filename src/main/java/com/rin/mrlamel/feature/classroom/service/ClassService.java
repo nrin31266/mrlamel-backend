@@ -8,6 +8,7 @@ import com.rin.mrlamel.feature.classroom.model.ClassSchedule;
 import com.rin.mrlamel.feature.classroom.model.ClassSession;
 import com.rin.mrlamel.feature.classroom.model.Clazz;
 import com.rin.mrlamel.feature.identity.model.User;
+import jakarta.persistence.criteria.Predicate;
 import org.springframework.security.core.Authentication;
 
 import java.time.LocalDate;
@@ -17,12 +18,13 @@ import java.util.List;
 public interface ClassService {
     Clazz createClass(CreateClassRequest createClassReq, Authentication authentication);
     PageableDto<Clazz> getAllClasses(
-            int page,
-            int size,
+            Integer page,
+            Integer size,
             String sortBy,
             String sortDirection,
             String status,
-            String searchTerm
+            String searchTerm,
+            List<Predicate> extraPredicates
     );
     Clazz getClassById(Long classId);
     void removeClass(Long classId);
@@ -67,5 +69,11 @@ public interface ClassService {
     List<LearnedSessionDto> getLearnedSessionsForClass(Long classId);
 
 
-
+    List<ClazzDto> getClassesStudentIsEnrolledIn(Long studentId, Integer page,
+                                                            Integer size,
+                                                            String sortBy,
+                                                            String sortDirection,
+                                                            String status,
+                                                            String searchTerm
+    );
 }

@@ -47,7 +47,7 @@ public class AminClassController {
             @RequestParam(required = false) String status
     ) {
         log.info("Fetching all classes with pagination and sorting");
-        return ApiRes.success(classService.getAllClasses(page - 1, size, sortBy, sortDirection, status, searchTerm));
+        return ApiRes.success(classService.getAllClasses(page - 1, size, sortBy, sortDirection, status, searchTerm, null));
     }
 
     @GetMapping("/{classId}")

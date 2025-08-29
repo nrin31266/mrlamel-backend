@@ -1,6 +1,7 @@
 package com.rin.mrlamel.feature.classroom.dto;
 
 import com.rin.mrlamel.common.constant.CLASS_STATUS;
+import com.rin.mrlamel.feature.classroom.model.ClassSchedule;
 import com.rin.mrlamel.feature.classroom.model.Course;
 import com.rin.mrlamel.feature.identity.model.User;
 import lombok.*;
@@ -8,6 +9,7 @@ import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -31,4 +33,6 @@ public class ClazzDto {
     private LocalDateTime updatedAt;
     private Course course; // Khóa học mà lớp này thuộc về
     private User createdBy; // Người tạo lớp học, có thể là giáo viên hoặc quản trị viên
+
+    List<ClassSchedule> schedules;
 }

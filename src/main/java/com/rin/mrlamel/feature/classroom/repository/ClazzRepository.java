@@ -1,6 +1,7 @@
 package com.rin.mrlamel.feature.classroom.repository;
 
 import com.rin.mrlamel.feature.classroom.model.Clazz;
+import jakarta.persistence.EntityManager;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -109,8 +110,6 @@ public interface ClazzRepository extends JpaRepository<Clazz, Long>, JpaSpecific
     List<Clazz> getClassesTeacherIsTeaching(
             @Param("teacherId") Long teacherId
     );
-
-
 
 
 
