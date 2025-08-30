@@ -575,7 +575,6 @@ public class ClassServiceImpl implements ClassService {
 
         return result;
     }
-    @Override
     public PageableDto<Clazz> getAllClasses(
             Integer page,
             Integer size,
@@ -583,40 +582,38 @@ public class ClassServiceImpl implements ClassService {
             String sortDirection,
             String status,
             String searchTerm,
-            List<Predicate> extraPredicates
+            Specification<Clazz> extraSpec
     ) {
-        Specification<Clazz> spec = (root, query, criteriaBuilder) -> {
+        Specification<Clazz> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
             if (status != null && !status.isEmpty()) {
-                predicates.add(criteriaBuilder.equal(root.get("status"), status));
+                predicates.add(cb.equal(root.get("status"), status));
             }
             if (searchTerm != null && !searchTerm.isEmpty()) {
                 String searchPattern = "%" + searchTerm.toLowerCase() + "%";
-                predicates.add(criteriaBuilder.or(
-                        criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), searchPattern),
-                        criteriaBuilder.like(criteriaBuilder.lower(root.get("description")), searchPattern)
+                predicates.add(cb.or(
+                        cb.like(cb.lower(root.get("name")), searchPattern),
+                        cb.like(cb.lower(root.get("description")), searchPattern)
                 ));
             }
 
-            // 👇 merge thêm điều kiện truyền ngoài vào
-            if (extraPredicates != null && !extraPredicates.isEmpty()) {
-                predicates.addAll(extraPredicates);
+            Predicate mainPredicate = cb.and(predicates.toArray(new Predicate[0]));
+
+            if (extraSpec != null) {
+                return cb.and(mainPredicate, extraSpec.toPredicate(root, query, cb));
             }
 
-            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+            return mainPredicate;
         };
 
         Sort sort = Sort.by(Sort.Direction.fromString(sortDirection), sortBy);
+        Pageable pageable = PageRequest.of(page != null ? page : 0, size != null ? size : 100, sort);
 
-        if (page == null || size == null) {
-            page = 0;
-            size = 100; // Trả về tối đa 100 bản ghi nếu không phân trang
-        }
-        Pageable pageable = PageRequest.of(page, size, sort);
         Page<Clazz> pageResult = clazzRepository.findAll(spec, pageable);
         return pageableMapper.toPageableDto(pageResult);
     }
+
 
     @Override
     public List<ClazzDto> getClassesStudentIsEnrolledIn(
@@ -628,11 +625,7 @@ public class ClassServiceImpl implements ClassService {
             String status,
             String searchTerm
     ) {
-        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-
-        List<Predicate> extraPredicates = new ArrayList<>();
-
-        Specification<Clazz> spec = (root, query, criteriaBuilder) -> {
+        Specification<Clazz> enrolledSpec = (root, query, cb) -> {
             Subquery<Integer> subquery = query.subquery(Integer.class);
             Root<ClassEnrollment> enrollmentRoot = subquery.from(ClassEnrollment.class);
 
@@ -642,19 +635,13 @@ public class ClassServiceImpl implements ClassService {
                     cb.equal(enrollmentRoot.get("clazz").get("id"), root.get("id"))
             );
 
-            extraPredicates.add(cb.exists(subquery));
-            return null; // không dùng ở đây, chỉ tạo predicate để truyền thôi
+            return cb.exists(subquery);
         };
 
         PageableDto<Clazz> clazzPage = getAllClasses(
-                page,
-                size,
-                sortBy,
-                sortDirection,
-                status,
-                searchTerm,
-                extraPredicates
+                page, size, sortBy, sortDirection, status, searchTerm, enrolledSpec
         );
+
 
         // map sang DTO
         return clazzPage.getContent()

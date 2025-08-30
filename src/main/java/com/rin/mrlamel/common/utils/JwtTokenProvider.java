@@ -8,6 +8,7 @@ import com.nimbusds.jwt.SignedJWT;
 import com.rin.mrlamel.feature.identity.model.RefreshToken;
 import com.rin.mrlamel.feature.identity.model.User;
 import com.rin.mrlamel.feature.identity.repository.RefreshTokenRepository;
+import com.rin.mrlamel.security.CustomJwtDecoder;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -15,13 +16,16 @@ import lombok.experimental.NonFinal;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.security.oauth2.server.resource.InvalidBearerTokenException;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -35,6 +39,7 @@ public class JwtTokenProvider {
     String signerKey;
 
     RefreshTokenRepository refreshTokenRepository;
+    CustomJwtDecoder customJwtDecoder;
 
 
     public String generateToken(User user, long expiresIn, String tokenType) {
@@ -42,11 +47,11 @@ public class JwtTokenProvider {
             throw new IllegalArgumentException("Signer key must be at least 64 characters");
         }
 
-        List<String> permissions = user.getPermissions().stream()
+        List<String> permissions = user.getPermissions() == null? new ArrayList<>() : user.getPermissions().stream()
                 .map(permission -> permission.getName().toUpperCase())
                 .toList();
 
-        JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS256);
+
         JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
                 .jwtID(UUID.randomUUID().toString())
                 .issuer("com.rin.mrlamel")
@@ -59,12 +64,15 @@ public class JwtTokenProvider {
                 .issueTime(new Date())
                 .expirationTime(new Date(Instant.now().plus(expiresIn, ChronoUnit.MILLIS).toEpochMilli()))
                 .build();
-        Payload payload = new Payload(claimsSet.toJSONObject());
-        JWSObject jwsObject = new JWSObject(jwsHeader, payload);
+        SignedJWT signedJWT = new SignedJWT(
+                new JWSHeader(JWSAlgorithm.HS512),
+                claimsSet
+        );
 
         try{
-            jwsObject.sign(new MACSigner(signerKey.getBytes()));
-            return jwsObject.serialize();
+            signedJWT.sign(new MACSigner(signerKey.getBytes(StandardCharsets.UTF_8)));
+
+            return signedJWT.serialize();
         }catch (Exception e) {
             throw new RuntimeException("Error generating token", e);
         }
@@ -79,13 +87,13 @@ public class JwtTokenProvider {
     }
     public Object getClaim(String token, String claimName) {
         try {
-            SignedJWT signedJWT = SignedJWT.parse(token);
-            JWTClaimsSet claimsSet = signedJWT.getJWTClaimsSet();
-            return claimsSet.getClaim(claimName);
-        } catch (ParseException e) {
-            throw new InvalidBearerTokenException("Malformed token", e);
+            Jwt jwt = customJwtDecoder.decode(token);
+            return jwt.getClaim(claimName);
+        } catch (JwtException e) {
+            throw new InvalidBearerTokenException("Invalid token", e);
         }
     }
+
     private Jwt extractJwt(Authentication authentication) {
         if (authentication instanceof JwtAuthenticationToken token) {
             return token.getToken();
@@ -93,6 +101,12 @@ public class JwtTokenProvider {
         throw new IllegalStateException("Invalid authentication type");
     }
 
+//    private String extractTokenString(Authentication authentication) {
+//        if (authentication instanceof JwtAuthenticationToken token) {
+//            return token.getToken().getTokenValue();
+//        }
+//        throw new IllegalStateException("Invalid authentication type");
+//    }
     public RefreshToken validateRefreshToken(String refreshToken) {
         try {
             // 1. Kiểm tra token null/empty

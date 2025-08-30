@@ -46,7 +46,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     JwtTokenProvider jwtTokenProvider;
     UserMapper userMapper;
     int durationInMinutes = 3;
-    long accessTokenDuration = 5 * 60 * 1000; // 5 minutes
+    long accessTokenDuration = 60 * 60 * 1000; // 60 minutes
     long refreshTokenDuration = 7 * 24 * 60* 60 * 1000; // 7 days
     RefreshTokenRepository refreshTokenRepository;
 
@@ -233,6 +233,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         // Update user profile fields
         userMapper.updateUserProfile(updateProfileRq, user);
         // Check if the profile is complete
+        if(updateProfileRq.getPhoneNumber().length()<10){
+            throw new AppException("Phone number must be at least 10 digits");
+        }
         if (user.isProfileComplete()) {
             user.setCompletedProfile(true); // Set completedProfile to true if all fields are filled
         }

@@ -9,6 +9,7 @@ import com.rin.mrlamel.feature.classroom.model.ClassSession;
 import com.rin.mrlamel.feature.classroom.model.Clazz;
 import com.rin.mrlamel.feature.identity.model.User;
 import jakarta.persistence.criteria.Predicate;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.Authentication;
 
 import java.time.LocalDate;
@@ -24,7 +25,7 @@ public interface ClassService {
             String sortDirection,
             String status,
             String searchTerm,
-            List<Predicate> extraPredicates
+            Specification<Clazz> extraSpec
     );
     Clazz getClassById(Long classId);
     void removeClass(Long classId);
@@ -68,7 +69,7 @@ public interface ClassService {
 
     List<LearnedSessionDto> getLearnedSessionsForClass(Long classId);
 
-
+    //
     List<ClazzDto> getClassesStudentIsEnrolledIn(Long studentId, Integer page,
                                                             Integer size,
                                                             String sortBy,

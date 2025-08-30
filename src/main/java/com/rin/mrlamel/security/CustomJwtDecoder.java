@@ -1,5 +1,6 @@
 package com.rin.mrlamel.security;
 
+import com.nimbusds.jose.JWSAlgorithm;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,10 +24,11 @@ public class CustomJwtDecoder implements JwtDecoder {
 
     @PostConstruct // Được gọi SAU KHI Spring inject dependencies
     public void init() {
-        SecretKey key = new SecretKeySpec(signerKey.getBytes(), "HmacSHA256");
+        log.info("Initializing CustomJwtDecoder with signerKey of length: {}", signerKey.length());
+        SecretKey key = new SecretKeySpec(signerKey.getBytes(), JWSAlgorithm.HS512.getName());
         this.jwtDecoder = NimbusJwtDecoder
                 .withSecretKey(key)
-                .macAlgorithm(MacAlgorithm.HS256)
+                .macAlgorithm(MacAlgorithm.HS512)
                 .build();
     }
 
@@ -36,4 +38,5 @@ public class CustomJwtDecoder implements JwtDecoder {
 
         return jwtDecoder.decode(token);
     }
+
 }

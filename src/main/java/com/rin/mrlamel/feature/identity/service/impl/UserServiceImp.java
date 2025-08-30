@@ -3,6 +3,7 @@ package com.rin.mrlamel.feature.identity.service.impl;
 import com.rin.mrlamel.common.dto.PageableDto;
 import com.rin.mrlamel.common.exception.AppException;
 import com.rin.mrlamel.common.mapper.PageableMapper;
+import com.rin.mrlamel.common.utils.JwtTokenProvider;
 import com.rin.mrlamel.common.utils.OtpProvider;
 import com.rin.mrlamel.feature.classroom.model.ClassSession;
 import com.rin.mrlamel.feature.email.service.EmailService;
@@ -40,6 +41,7 @@ public class UserServiceImp implements com.rin.mrlamel.feature.identity.service.
     EmailService emailProvider;
     OtpProvider otpProvider;
     PasswordEncoder passwordEncoder;
+    JwtTokenProvider jwtTokenProvider;
 
 
     @Override
@@ -210,6 +212,11 @@ public class UserServiceImp implements com.rin.mrlamel.feature.identity.service.
         return userRepository.findByEmail(email).orElse(null);
     }
 
+    @Override
+    public User getUserByToken(String token) {
+        Long id = (Long) jwtTokenProvider.getClaim(token, "id");
+        return userRepository.findById(id).orElseThrow(() -> new AppException("Invalid token: user not found"));
+    }
 
 
 }

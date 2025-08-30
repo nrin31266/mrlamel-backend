@@ -25,7 +25,7 @@ import java.util.List;
 @RequestMapping("/api/v1/student/classes")
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
-public class ClassStudentController {
+public class StudentClassController {
     ClassService classService;
     AttendanceService attendanceService;
     JwtTokenProvider jwtTokenProvider;
