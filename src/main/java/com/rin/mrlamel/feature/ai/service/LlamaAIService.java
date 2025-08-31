@@ -2,7 +2,6 @@ package com.rin.mrlamel.feature.ai.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.rin.mrlamel.feature.ai.dto.AskResponse;
 import com.rin.mrlamel.feature.ai.dto.UserDto;
 import com.rin.mrlamel.feature.identity.model.User;
 import com.rin.mrlamel.feature.identity.service.UserService;
@@ -22,7 +21,7 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE, makeFinal = true)
-public class AIService {
+public class LlamaAIService {
     UserService userService;
     ChatClient chatClient;
     WebClient webClient = WebClient.create();
@@ -48,7 +47,7 @@ public class AIService {
     public String ask(String question, String token) {
         UserDto user = getUserFromToken(token);
         String userRole = user.getRole();
-        String keyword = "";
+        String keyword;
         try {
             keyword = extractKeyword(question, userRole).toLowerCase().trim();
         } catch (Exception e) {
@@ -121,6 +120,7 @@ public class AIService {
                 Từ dữ liệu sau: %s
                 Hãy trả lời câu hỏi một cách chính xác, ngắn gọn, xúc tích nhưng đầy đủ thông tin dựa trên dữ liệu đã cho.
                 Format kết quả bằng các thẻ HTML như <p>, <ul>, <li>, <b>
+                Sử dụng tiếng Việt để trả lời.
                 Cho câu hỏi sau: "%s".
                 """.formatted(combinedResponse, question);
 
@@ -149,7 +149,7 @@ public class AIService {
                 ***CHỈ TRẢ VỀ TỪ KHÓA duy nhất, KHÔNG THÊM BẤT KỲ chữ gì khác, KHÔNG giải thích, KHÔNG mô tả, KHÔNG ví dụ***
                 Bạn là hệ thống phân loại câu hỏi. CHỈ trả về MỘT trong các từ khóa sau:
                 - "lịch học theo tuần"
-                - "lịch học theo ngày" 
+                - "lịch học theo ngày"
                 - "tôi là ai"
                 - "unauthorized"
                 - "" (chuỗi rỗng)
@@ -157,7 +157,7 @@ public class AIService {
                 QUY TẮC:
                 1. Câu hỏi về lịch học trong tuần, lịch học các ngày -> "lịch học theo tuần"
                 2. Câu hỏi về lịch học cụ thể ngày nào, hôm nay, ngày mai -> "lịch học theo ngày"
-                3. Câu hỏi "tôi là ai", "thông tin của tôi" -> "tôi là ai"
+                3. Câu hỏi "tôi là ai", "thông tin của tôi như số điện thoại, ngày sinh, tên, ngày tham gia,..." -> "tôi là ai"
                 4. Nếu user có role "%s" KHÔNG được phép truy cập thông tin -> "unauthorized"
                 5. Câu hỏi khác, chào hỏi, thông tin chung -> ""
                 
@@ -210,10 +210,11 @@ public class AIService {
                 Yêu cầu:
                 1. Điền tất cả param vào URL đầy đủ dạng:
                    http://localhost:8080/api/...?param1=giá_trị&param2=giá_trị
+                   * Có thể tạo nhiều URL nếu cần thiết (ví dụ: hom nay + 3 ngày tiếp theo -> 4 URL)
                 2. Trả về JSON duy nhất:
                 {
                     "type": "api",
-                    "endpoints": ["URL_API_đầy_đủ"]
+                    "endpoints": ["URL_API_đầy_đủ", "URL_API_đầy_đủ_nếu_có_nhiều_hơn_1"]
                 }
                 ***CHỈ TRẢ VỀ JSON duy nhất, KHÔNG THÊM BẤT KỲ chữ gì khác, KHÔNG giải thích, KHÔNG mô tả, KHÔNG ví dụ***       
                 """.formatted(question, keyword, endpointTemplate, params, instructions);
@@ -243,7 +244,7 @@ public class AIService {
             "lịch học theo tuần", Map.of(
                     "endpoint", BASE_URL + "/v1/student/classes/time-table/week",
                     "params", Map.of(
-                            "weekNumber", "0 (tuần hiện tại), 1 (tuần sau), -1 (tuần trước) ..."
+                            "weekNumber", "0 (tuần hiện tại), 1 (1 tuần sau), -1 (1 tuần trước), n tuần tiếp theo (n endpoints) "
                     ),
                     "instructions", "Truyền weekNumber dựa theo câu hỏi, ví dụ: 'Lịch học tuần này' -> weekNumber=0"
             ),
@@ -252,7 +253,7 @@ public class AIService {
                     "params", Map.of(
                             "date", "yyyy-MM-dd, ví dụ hôm nay: " + LocalDate.now()
                     ),
-                    "instructions", "Truyền date dựa theo câu hỏi, ví dụ: 'Lịch học hôm nay' -> date=2025-08-31"
+                    "instructions", "Truyền date dựa theo câu hỏi, ví dụ: 'Lịch học hôm nay' -> date=2025-08-31, n ngày tiếp theo (n endpoints)"
             ),
             "tôi là ai", Map.of(
                     "endpoint", BASE_URL + "/v1/auth/my",

@@ -28,11 +28,11 @@ spring:
             enable: true
   ai:
     ollama:
-      base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
+#      base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
       chat:
         options:
           model: ${OLLAMA_MODEL:llama3:8b-instruct-q4_0}
-          temperature: 1.0
+          temperature: 0.5
     #          Temperature thấp (0.1-0.5): Model sẽ trở nên rất tập trung và dự đoán được. Nó thường chọn những từ phổ biến
     #  nhất, dẫn đến các câu trả lời nhất quán, có tính thực tế cao, và lặp lại. Phù hợp cho các tác vụ yêu cầu tính chính xác và sự kiện.
     #          Temperature cao (0.7-1.0): Model trở nên sáng tạo và ngẫu nhiên hơn. Nó có thể chọn những từ ít phổ biến hơn,
@@ -49,7 +49,8 @@ server:
 jwt:
   signerKey: ${JWT_SIGNER_KEY:HDKdDVDEpABtpunTzN2QM2pbmVzDP5jht6WGykegNKgsKDVdDlbzFVmU1vDOVOHV}
 
-
+openrouter:
+    api-key: ${OPENROUTER_API_KEY}
 
 cors:
   allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:300}
