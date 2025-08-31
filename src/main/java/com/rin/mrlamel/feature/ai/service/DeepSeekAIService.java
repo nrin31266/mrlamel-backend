@@ -190,7 +190,7 @@ public class DeepSeekAIService {
                   (n = 0: tuần này, 1: tuần sau, -1: tuần trước)
                 
                 - "lịch học theo ngày": http://localhost:8080/api/v1/student/classes/time-table/day?date={dateValue}
-                  (ví dụ:  hôm nay %s). dateValue định dạng ISO yyyy-MM-dd
+                  (hôm nay là ngày %s). dateValue định dạng ISO yyyy-MM-dd ví dụ 2024-07-01
                 
                 - "tôi là ai": http://localhost:8080/api/v1/auth/my
                 
@@ -200,7 +200,7 @@ public class DeepSeekAIService {
                 USER ROLE: "%s"
                 
                 ***CHỈ TRẢ VỀ JSON duy nhất, KHÔNG THÊM BẤT KỲ chữ gì khác, KHÔNG giải thích, KHÔNG mô tả, KHÔNG ví dụ***
-                """.formatted(userRole, LocalDate.now(), question, userRole);
+                """.formatted(LocalDate.now().toString(), question, userRole);
 
         String response = askDeepSeek(prompt);
 
