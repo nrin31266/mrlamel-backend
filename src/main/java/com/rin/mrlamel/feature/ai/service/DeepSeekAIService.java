@@ -7,6 +7,7 @@ import com.rin.mrlamel.feature.ai.dto.UserDto;
 import com.rin.mrlamel.feature.identity.model.User;
 import com.rin.mrlamel.feature.identity.service.UserService;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
@@ -64,16 +65,16 @@ public class DeepSeekAIService {
             return "Xin lỗi, tôi không thể phân tích câu hỏi của bạn vào lúc này. Vui lòng thử lại sau.";
         }
 
-        log.info("API Analysis Result: {}", analysisResult);
+        log.info("API Analysis Result: {}", analysisResult.toString());
 
 
 
-        if (analysisResult.keyword.equals("unauthorized")) {
-            return cleanedHtml(askDeepSeek(SYSTEM_CONTEXT.formatted(question) + """
-                    *Chú ý: Hãy trả lời rằng bạn không có quyền truy cập thông tin này một cách vui vẻ và lịch sự.
-                    Hoặc đưa ra những thông tin chung chung về trung tâm mà không đề cập đến thông tin cá nhân.
-                    """));
-        }
+//        if (analysisResult.keyword.equals("unauthorized")) {
+//            return cleanedHtml(askDeepSeek(SYSTEM_CONTEXT.formatted(question) + """
+//                    *Chú ý: Hãy trả lời rằng bạn không có quyền truy cập thông tin này một cách vui vẻ và lịch sự.
+//                    Hoặc đưa ra những thông tin chung chung về trung tâm mà không đề cập đến thông tin cá nhân.
+//                    """));
+//        }
 
         if (analysisResult.keyword.isEmpty() || analysisResult.endpoints.isEmpty()) {
             return cleanedHtml(askDeepSeek(SYSTEM_CONTEXT.formatted(question) + """
@@ -103,7 +104,7 @@ public class DeepSeekAIService {
         String finalPrompt = question + """
                 Từ dữ liệu sau: %s
                 Hãy trả lời câu hỏi một cách chính xác, ngắn gọn, xúc tích nhưng đầy đủ thông tin dựa trên dữ liệu đã cho.
-                Format kết quả bằng các thẻ HTML như <p>, <ul>, <li>, <b>
+                Format kết quả bằng các thẻ HTML như <p>, <ul>, <li>, <b>, <i> Có thể css inline nếu cần.
                 Sử dụng tiếng Việt để trả lời.
                 Cho câu hỏi sau: "%s".
                 """.formatted(combinedResponse, question);
@@ -142,7 +143,7 @@ public class DeepSeekAIService {
             // Parse response
             JsonNode rootNode = objectMapper.readTree(response);
             JsonNode choicesNode = rootNode.path("choices");
-            if (choicesNode.isArray() && choicesNode.size() > 0) {
+            if (choicesNode.isArray() && !choicesNode.isEmpty()) {
                 JsonNode messageNode = choicesNode.get(0).path("message");
                 if (!messageNode.isMissingNode()) {
                     return messageNode.path("content").asText();
@@ -176,22 +177,20 @@ public class DeepSeekAIService {
                 - "lịch học theo tuần"
                 - "lịch học theo ngày"
                 - "tôi là ai"
-                - "unauthorized"
                 - "" (chuỗi rỗng)
                 
                 QUY TẮC:
                 1. Câu hỏi về lịch học trong tuần, lịch học các ngày -> "lịch học theo tuần"
                 2. Câu hỏi về lịch học cụ thể ngày nào, hôm nay, ngày mai -> "lịch học theo ngày"
                 3. Câu hỏi "tôi là ai", "thông tin của tôi như số điện thoại, ngày sinh, tên, ngày tham gia,..." -> "tôi là ai"
-                4. Nếu user có role "%s" KHÔNG được phép truy cập thông tin -> "unauthorized"
-                5. Câu hỏi khác, chào hỏi, thông tin chung -> ""
+                4. Câu hỏi khác, chào hỏi, thông tin chung -> ""
                 
                 XÂY DỰNG ENDPOINTS:
                 - "lịch học theo tuần": http://localhost:8080/api/v1/student/classes/time-table/week?weekNumber={n}
                   (n = 0: tuần này, 1: tuần sau, -1: tuần trước)
                 
-                - "lịch học theo ngày": http://localhost:8080/api/v1/student/classes/time-table/day?date={yyyy-MM-dd}
-                  (ví dụ: hôm nay %s)
+                - "lịch học theo ngày": http://localhost:8080/api/v1/student/classes/time-table/day?date={dateValue}
+                  (ví dụ:  hôm nay %s). dateValue định dạng ISO yyyy-MM-dd
                 
                 - "tôi là ai": http://localhost:8080/api/v1/auth/my
                 
@@ -226,7 +225,9 @@ public class DeepSeekAIService {
         }
     }
 
+
     // Class để lưu kết quả phân tích
+    @ToString
     private static class ApiAnalysisResult {
         String keyword;
         List<String> endpoints;

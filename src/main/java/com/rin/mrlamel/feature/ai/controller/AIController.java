@@ -19,7 +19,7 @@ public class AIController {
     LlamaAIService aiService;
     DeepSeekAIService deepSeekAIService;
 
-    @GetMapping("/ask")
+    @PostMapping("/ask")
     public ApiRes<AskResponse> askAI(@RequestBody AskRequest askRequest,
                                      @RequestHeader("Authorization") String token){
 
@@ -29,7 +29,7 @@ public class AIController {
                 .build());
     }
 
-    @GetMapping("/deep-seek/ask")
+    @PostMapping("/deep-seek/ask")
     public ApiRes<AskResponse> askDeepSeekAI(@RequestBody AskRequest askRequest,
                                      @RequestHeader("Authorization") String token){
 
